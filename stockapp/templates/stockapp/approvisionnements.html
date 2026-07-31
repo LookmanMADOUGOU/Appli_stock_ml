@@ -1,0 +1,96 @@
+{% extends 'stockapp/base.html' %}
+{% block title %}Approvisionnements - Gestion Stock IA{% endblock %}
+{% block page_title %}Approvisionnements{% endblock %}
+
+{% block content %}
+  <section class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="card">
+        <div class="text-sm text-muted">Quantité approvisionnée (unités)</div>
+        <div class="mt-3 text-3xl font-semibold">{{ total_approvisionnements }}</div>
+      </div>
+      <div class="card">
+        <div class="text-sm text-muted">Enregistrements</div>
+        <div class="mt-3 text-3xl font-semibold">{{ approvisionnements|length }}</div>
+      </div>
+    </div>
+
+    <div class="card-glow">
+      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Derniers approvisionnements</h2>
+          <p class="text-sm text-slate-500">Suivi des apports en stock par produit et fournisseur.</p>
+        </div>
+        <button onclick="document.getElementById('modal-ajouter-appro').classList.remove('hidden')" class="btn btn-primary">
+          <i class="fas fa-truck-loading"></i> Ajouter approvisionnement
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="table-modern w-full">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Fournisseur</th>
+              <th>Date</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appro in approvisionnements %}
+              <tr>
+                <td class="font-medium">{{ appro.produit.nom }}</td>
+                <td><span class="rounded-md bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700">+{{ appro.quantite }}</span></td>
+                <td class="text-sm text-slate-600">{{ appro.fournisseur }}</td>
+                <td class="text-sm text-slate-500">{{ appro.date_approvisionnement }}</td>
+                <td class="text-right">
+                  <form method="post" action="{% url 'stockapp:approvisionnement-supprimer' appro.id %}" onsubmit="return confirm('Annuler cet approvisionnement ? Le stock sera déduit.');" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Annuler cet approvisionnement">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">Aucun approvisionnement à afficher.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Ajouter Approvisionnement -->
+  <div id="modal-ajouter-appro" class="hidden modal-backdrop z-50 p-4">
+    <div class="modal max-w-md">
+      <div class="mb-4 flex items-center justify-between border-b pb-3">
+        <h3 class="text-lg font-semibold text-slate-900">Nouvel Approvisionnement</h3>
+        <button onclick="document.getElementById('modal-ajouter-appro').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
+      </div>
+
+      <form method="post" action="{% url 'stockapp:approvisionnements-list' %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Produit</label>
+          {{ form.produit }}
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Quantité à ajouter</label>
+          {{ form.quantite }}
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Fournisseur</label>
+          {{ form.fournisseur }}
+        </div>
+        <div class="flex items-center justify-end gap-3 border-t pt-4">
+          <button type="button" onclick="document.getElementById('modal-ajouter-appro').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter au stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

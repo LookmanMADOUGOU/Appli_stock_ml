@@ -1,0 +1,90 @@
+{% extends 'stockapp/base.html' %}
+{% block title %}Ventes - Gestion Stock IA{% endblock %}
+{% block page_title %}Ventes{% endblock %}
+
+{% block content %}
+  <section class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="card">
+        <div class="text-sm text-muted">Ventes totales (unités)</div>
+        <div class="mt-3 text-3xl font-semibold">{{ total_ventes }}</div>
+      </div>
+      <div class="card">
+        <div class="text-sm text-muted">Enregistrements</div>
+        <div class="mt-3 text-3xl font-semibold">{{ ventes|length }}</div>
+      </div>
+    </div>
+
+    <div class="card-glow">
+      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Historique des ventes</h2>
+          <p class="text-sm text-slate-500">Les dernières ventes enregistrées sur la plateforme.</p>
+        </div>
+        <button onclick="document.getElementById('modal-enregistrer-vente').classList.remove('hidden')" class="btn btn-primary">
+          <i class="fas fa-cart-plus"></i> Enregistrer vente
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="table-modern w-full">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Date</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for vente in ventes %}
+              <tr>
+                <td class="font-medium">{{ vente.produit.nom }}</td>
+                <td><span class="rounded-md bg-cyan-50 px-2.5 py-1 text-sm font-semibold text-cyan-700">{{ vente.quantite }} unités</span></td>
+                <td class="text-sm text-slate-500">{{ vente.date_vente }}</td>
+                <td class="text-right">
+                  <form method="post" action="{% url 'stockapp:vente-supprimer' vente.id %}" onsubmit="return confirm('Annuler cette vente ? Le stock sera automatiquement restauré.');" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Annuler cette vente">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="px-4 py-6 text-center text-sm text-slate-400">Aucune vente à afficher.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Enregistrer Vente -->
+  <div id="modal-enregistrer-vente" class="hidden modal-backdrop z-50 p-4">
+    <div class="modal max-w-md">
+      <div class="mb-4 flex items-center justify-between border-b pb-3">
+        <h3 class="text-lg font-semibold text-slate-900">Enregistrer une Vente</h3>
+        <button onclick="document.getElementById('modal-enregistrer-vente').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
+      </div>
+
+      <form method="post" action="{% url 'stockapp:ventes-list' %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Produit vendue</label>
+          {{ form.produit }}
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Quantité</label>
+          {{ form.quantite }}
+        </div>
+        <div class="flex items-center justify-end gap-3 border-t pt-4">
+          <button type="button" onclick="document.getElementById('modal-enregistrer-vente').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

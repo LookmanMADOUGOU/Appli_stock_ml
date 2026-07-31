@@ -1,0 +1,426 @@
+{% extends 'stockapp/base.html' %}
+{% block title %}Dashboard - Gestion Stock IA{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+{% block content %}
+  <section id="top" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <header class="card">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div class="max-w-2xl">
+          <div class="mb-3 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-200">
+            <span class="mr-2 h-2 w-2 rounded-full bg-cyan-300"></span>
+            Système de pilotage intelligent
+          </div>
+          <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Tableau de bord stock premium</h1>
+          <p class="mt-3 text-sm text-slate-300 sm:text-base">Surveillez le niveau de stock, les alertes critiques et les tendances de ventes en temps réel avec une vue entreprise.</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <a href="{% url 'stockapp:export-report-pdf' %}" class="btn btn-primary">Exporter le rapport PDF</a>
+          <div class="px-4 py-2 text-sm text-muted">Taux de rupture : <span class="font-semibold text-gray-800">{{ rupture_rate }}%</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div class="card">
+        <div class="text-sm text-muted">Produits référencés</div>
+        <div class="mt-3 text-3xl font-semibold">{{ produits_count }}</div>
+        <div class="mt-2 text-sm text-muted">+ gestion centralisée</div>
+      </div>
+      <div class="card">
+        <div class="text-sm text-muted">Stock total</div>
+        <div class="mt-3 text-3xl font-semibold">{{ stock_total }}</div>
+        <div class="mt-2 text-sm text-muted">Unités disponibles</div>
+      </div>
+      <div class="card">
+        <div class="text-sm text-muted">Alertes actives</div>
+        <div class="mt-3 text-3xl font-semibold">{{ alertes_actives_count }}</div>
+        <div class="mt-2 text-sm text-muted">{{ alert_rate }}% de vigilance</div>
+      </div>
+      <div class="card">
+        <div class="text-sm text-muted">Ventes 30 jours</div>
+        <div class="mt-3 text-3xl font-semibold">{{ ventes_30j }}</div>
+        <div class="mt-2 text-sm text-muted">Tendance commerciale</div>
+      </div>
+    </section>
+
+    <section id="products" class="mt-6">
+      <div class="section-title">
+        <div>
+          <h2>Produits</h2>
+          <p>Vue synthétique des produits critiques et des tendances de consommation.</p>
+        </div>
+        <div class="table-actions">
+          <a href="{% url 'stockapp:produit-ajouter' %}" class="btn btn-ghost"><i class="fas fa-plus"></i> Ajouter produit</a>
+          <a href="{% url 'stockapp:export-report-pdf' %}" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Exporter PDF</a>
+        </div>
+      </div>
+      <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div class="card-glow">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-semibold text-slate-900">Produits critiques</h2>
+              <p class="text-sm text-slate-500">Priorité de réapprovisionnement</p>
+            </div>
+            <span class="badge badge-danger">{{ produits_en_rupture_count }} à traiter</span>
+          </div>
+          <div class="space-y-3">
+            {% for p in produits_critique %}
+              <div class="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+                <div>
+                  <div class="font-medium text-white">{{ p.nom }}</div>
+                  <div class="text-sm text-slate-400">Stock {{ p.stock_actuel }} / seuil {{ p.seuil_alerte }}</div>
+                </div>
+                <div class="rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium text-amber-300">Critique</div>
+              </div>
+            {% empty %}
+              <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 px-4 py-6 text-center text-sm text-slate-400">Aucun produit critique à ce moment.</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card-glow">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-semibold text-slate-900">Stock global</h2>
+              <p class="text-sm text-slate-500">Données de stock par produit</p>
+            </div>
+            <span class="badge badge-success">{{ produits_count }} articles</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table-modern w-full">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Réf.</th>
+                  <th>Catégorie</th>
+                  <th>Stock</th>
+                  <th>Seuil</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for produit in produits_list %}
+                  <tr>
+                    <td>{{ produit.nom }}</td>
+                    <td>{{ produit.reference }}</td>
+                    <td>{% if produit.categorie %}{{ produit.categorie.nom }}{% else %}Aucune{% endif %}</td>
+                    <td>{{ produit.stock_actuel }}</td>
+                    <td>{{ produit.seuil_alerte }}</td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">Aucun produit disponible.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-glow">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-slate-900">Alertes récentes</h2>
+            <p class="text-sm text-slate-500">État d’urgence et suivi</p>
+          </div>
+          <span class="badge badge-success">Live</span>
+        </div>
+        <div class="space-y-3">
+          {% for a in alertes_actives %}
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
+              <div class="flex items-center justify-between gap-2">
+                <div class="font-medium text-white">{{ a.produit.nom }}</div>
+                {% if not a.est_resolue %}<span class="rounded-full bg-rose-500/10 px-2.5 py-1 text-xs font-medium text-rose-300">active</span>{% endif %}
+              </div>
+              <div class="mt-1 text-sm text-slate-400">{{ a.message }}</div>
+              <div class="mt-2 text-xs text-slate-500">{{ a.date_creation }}</div>
+            </div>
+          {% empty %}
+            <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 px-4 py-6 text-center text-sm text-slate-400">Aucune alerte active.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section id="categories" class="mt-8 card-glow">
+      <div class="section-title">
+        <div>
+          <h2>Catégories</h2>
+          <p>Organisation par famille de produits et priorités de réapprovisionnement.</p>
+        </div>
+        <a href="{% url 'stockapp:categories-list' %}" class="btn btn-ghost"><i class="fas fa-tags"></i> Gérer catégories</a>
+      </div>
+      <div class="mt-5 grid gap-4 md:grid-cols-3">
+        <div class="card">
+          <div class="text-sm text-muted">Catégories actives</div>
+          <div class="mt-3 text-3xl font-semibold">{{ categories_count }}</div>
+          <div class="mt-2 text-sm text-muted">Familles produit suivies</div>
+        </div>
+        <div class="card">
+          <div class="text-sm text-muted">Top catégorie</div>
+          <div class="mt-3 text-3xl font-semibold">{{ top_categories.0.total_produits|default:'--' }}</div>
+          <div class="mt-2 text-sm text-muted">Produit le plus dense</div>
+        </div>
+        <div class="card">
+          <div class="text-sm text-muted">Produits moyens / catégorie</div>
+          <div class="mt-3 text-3xl font-semibold">{{ avg_products_per_category }}</div>
+          <div class="mt-2 text-sm text-muted">Moyenne globale calculée</div>
+        </div>
+      </div>
+      <div class="mt-5 overflow-x-auto rounded-3xl border border-slate-200 bg-slate-50 p-4">
+        <div class="text-sm font-semibold text-slate-900">Top catégories</div>
+        <div class="mt-4 space-y-3">
+          {% for categorie in top_categories %}
+            <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
+              <div>
+                <div class="font-medium text-slate-900">{{ categorie.nom }}</div>
+                <div class="text-sm text-slate-500">{{ categorie.total_produits }} produits</div>
+              </div>
+              <div class="text-sm font-semibold text-cyan-600">Classement {{ forloop.counter }}</div>
+            </div>
+          {% empty %}
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-6 text-center text-sm text-slate-500">Aucune catégorie disponible.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section id="supplies" class="mt-8 card-glow">
+      <div class="section-title">
+        <div>
+          <h2>Approvisionnements</h2>
+          <p>Suivi des flux et réapprovisionnements planifiés.</p>
+        </div>
+        <a href="{% url 'stockapp:approvisionnements-list' %}" class="btn btn-ghost"><i class="fas fa-truck-loading"></i> Gérer approvisionnements</a>
+      </div>
+      <div class="mt-5 grid gap-4 md:grid-cols-3">
+        <div class="card">
+          <div class="text-sm text-muted">Approvisionnements totaux</div>
+          <div class="mt-3 text-3xl font-semibold">{{ approvisionnements_count }}</div>
+          <div class="mt-2 text-sm text-muted">Entrées enregistrées</div>
+        </div>
+        <div class="card">
+          <div class="text-sm text-muted">Réapprovisionnements récents</div>
+          <div class="mt-3 text-3xl font-semibold">{{ approvisionnements_recents|length }}</div>
+          <div class="mt-2 text-sm text-muted">Dernières mises à jour</div>
+        </div>
+        <div class="card">
+          <div class="text-sm text-muted">Temps réel</div>
+          <div class="mt-3 flex items-center gap-2 text-xl font-medium text-emerald-400">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            Actif
+          </div>
+          <div class="mt-2 text-sm text-muted">Statut API + backend</div>
+        </div>
+      </div>
+      <div class="mt-5 space-y-3">
+        {% for appro in approvisionnements_recents %}
+          <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex sm:justify-between sm:gap-4">
+            <div>
+              <div class="font-medium text-slate-900">{{ appro.produit.nom }}</div>
+              <div class="text-sm text-slate-500">{{ appro.fournisseur }} • {{ appro.date_approvisionnement }}</div>
+            </div>
+            <div class="rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">+{{ appro.quantite }}</div>
+          </div>
+        {% empty %}
+          <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-6 text-center text-sm text-slate-500">Aucun approvisionnement récent.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="sales" class="mt-8">
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 card-glow">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-white">Évolution des ventes</h2>
+            <p class="text-sm text-slate-400">Derniers 30 jours</p>
+          </div>
+        </div>
+        <canvas id="chart-sales" class="h-64 w-full"></canvas>
+      </div>
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 card-glow">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-white">Top consommation</h2>
+            <p class="text-sm text-slate-400">Produits les plus sollicités</p>
+          </div>
+        </div>
+        <canvas id="chart-consumption" class="h-64 w-full"></canvas>
+        <div class="mt-6 space-y-3">
+          {% if top_consumed %}
+            {% for item in top_consumed %}
+              <div class="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
+                <span>{{ item.produit__nom }}</span>
+                <span class="font-semibold text-cyan-300">{{ item.total }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 px-4 py-6 text-center text-sm text-slate-400">Aucune consommation enregistrée récemment.</div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-6 grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 card-glow">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-white">Ventes récentes</h2>
+            <p class="text-sm text-slate-400">Mouvements récents</p>
+          </div>
+          <span class="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-300">{{ ventes_recentes|length }} entrées</span>
+        </div>
+        <div class="space-y-3">
+          {% for v in ventes_recentes %}
+            <div class="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+              <div>
+                <div class="font-medium text-white">{{ v.produit.nom }}</div>
+                <div class="text-sm text-slate-400">{{ v.date_vente }}</div>
+              </div>
+              <div class="rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-medium text-cyan-300">{{ v.quantite }} unités</div>
+            </div>
+          {% empty %}
+            <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 px-4 py-6 text-center text-sm text-slate-400">Aucune vente récente.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 card-glow">
+        <div class="mb-4">
+          <h2 class="text-xl font-semibold text-white">Prévisions</h2>
+          <p class="text-sm text-slate-400">Projection IA rapide</p>
+        </div>
+        <div class="space-y-3">
+          {% for p in previsions|slice:':5' %}
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
+              <div class="font-medium text-white">{{ p.nom }}</div>
+              <div class="mt-1 flex items-center justify-between text-sm text-slate-400">
+                <span>Prévision IA</span>
+                <span class="font-medium text-cyan-300">{{ p.prediction_ml }}</span>
+              </div>
+              <div class="mt-1 flex items-center justify-between text-sm text-slate-400">
+                <span>Jours avant rupture</span>
+                <span class="font-medium text-amber-300">{{ p.prediction_rupture }}</span>
+              </div>
+            </div>
+          {% empty %}
+            <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 px-4 py-6 text-center text-sm text-slate-400">Aucune prévision disponible.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-5 card-glow">
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold text-white">Stock restant</h2>
+        <p class="text-sm text-slate-400">Vue synthétique par produit</p>
+      </div>
+      <canvas id="chart-stock" class="h-72 w-full"></canvas>
+    </section>
+  </section>
+
+  <script>
+    async function fetchJson(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) {
+        console.error('Fetch error', url, res.status);
+        return [];
+      }
+      return res.json();
+    }
+
+    function renderChart(elementId, config) {
+      const canvas = document.getElementById(elementId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      return new Chart(ctx, config);
+    }
+
+    fetchJson('/api/charts/sales/?days=30')
+      .then(data => {
+        const labels = data.map(item => item.date || item.label || '');
+        const values = data.map(item => item.quantite || item.total || 0);
+        renderChart('chart-sales', {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Ventes',
+              data: values,
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.22)',
+              fill: true,
+              tension: 0.25,
+            }],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+          },
+        });
+      })
+      .catch(err => console.error('Chart sales error', err));
+
+    fetchJson('/api/charts/consumption/?days=30')
+      .then(data => {
+        const labels = data.map(item => item.produit_nom || item.produit__nom || 'Produit');
+        const values = data.map(item => item.quantite || item.total || 0);
+        renderChart('chart-consumption', {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Consommation',
+              data: values,
+              backgroundColor: '#22c55e',
+            }],
+          },
+          options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+          },
+        });
+      })
+      .catch(err => console.error('Chart consumption error', err));
+
+    fetchJson('/api/charts/stock/')
+      .then(data => {
+        const labels = data.map(item => item.produit_nom || item.produit__nom || 'Produit');
+        const values = data.map(item => item.stock_actuel || 0);
+        const thresholds = data.map(item => item.seuil_alerte || 0);
+        renderChart('chart-stock', {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Stock actuel',
+                data: values,
+                backgroundColor: '#f59e0b',
+              },
+              {
+                label: 'Seuil alerte',
+                data: thresholds,
+                type: 'line',
+                borderColor: '#ef4444',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: { x: { display: false } },
+            plugins: { legend: { position: 'bottom' } },
+          },
+        });
+      })
+      .catch(err => console.error('Chart stock error', err));
+  </script>
+{% endblock %}

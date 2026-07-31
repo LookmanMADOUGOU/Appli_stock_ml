@@ -1,0 +1,126 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Gestion Stock IA{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pzw5X2f9+Y0k7Yv5Y2H1zKq1Z1iQe2G5x1Y6m1Y6x1Y6x1Y6x1Y6x1Y6==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'stockapp/css/theme.css' %}">
+  <script src="{% static 'stockapp/js/ui.js' %}" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800">
+  <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg" href="#main-content">Aller au contenu</a>
+
+  {% block page_body %}
+  <div id="app" class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-72 bg-[#243447] text-white flex-shrink-0 transition-all duration-200">
+      <div class="flex items-center gap-3 px-6 py-5">
+        <div class="h-12 w-12 flex items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 text-white shadow">
+          <span class="text-lg font-semibold">LT</span>
+        </div>
+        <div>
+          <div class="text-sm font-semibold">LOOK-TECH</div>
+          <div class="text-xs text-cyan-200">Gestion Stock IA</div>
+        </div>
+        <button id="sidebar-toggle" class="ml-auto text-cyan-200 hover:text-white" aria-label="Réduire la sidebar"><i class="fas fa-angle-left"></i></button>
+      </div>
+
+      <nav class="mt-6 px-2">
+        <a href="/dashboard/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-chart-line w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Tableau de bord</span>
+        </a>
+        <a href="/dashboard/produits/" class="group mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-boxes w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Produits</span>
+        </a>
+        <a href="/dashboard/categories/" class="group mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-tags w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Catégories</span>
+        </a>
+        <a href="/dashboard/approvisionnements/" class="group mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-truck-loading w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Approvisionnements</span>
+        </a>
+        <a href="/dashboard/ventes/" class="group mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-cash-register w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Ventes</span>
+        </a>
+        <a href="/info/" class="group mt-6 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-info-circle w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Info publique</span>
+        </a>
+        <a href="/admin/" target="_blank" class="group mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-user-shield w-5 text-amber-300 group-hover:text-amber-200"></i>
+          <span>Admin Django</span>
+        </a>
+      </nav>
+
+      <div class="mt-auto px-6 py-6">
+        <a href="/logout/" class="flex items-center gap-3 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium hover:bg-white/20 transition-colors">
+          <i class="fas fa-sign-out-alt w-5 text-emerald-300"></i>
+          <span>Déconnexion</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main content area -->
+    <div class="flex-1 flex flex-col overflow-auto">
+      <!-- Topbar -->
+      <header class="flex items-center justify-between border-b bg-white shadow-sm px-6 py-3">
+        <div class="flex items-center gap-4">
+          <button id="mobile-toggle" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h1 class="text-lg font-semibold text-gray-800">{% block page_title %}Tableau de bord{% endblock %}</h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <input type="search" placeholder="Recherche" class="h-10 w-72 rounded-full border border-gray-200 bg-white px-4 pr-10 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          </div>
+          <button class="p-2 rounded-full bg-emerald-100 text-emerald-700"><i class="fas fa-bell"></i></button>
+          <div class="flex items-center gap-2">
+            <div class="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">U</div>
+            <div class="hidden sm:block text-sm">Utilisateur</div>
+          </div>
+        </div>
+      </header>
+
+      <main id="main-content" class="p-6">
+        {% if messages %}
+          <div class="mb-6 space-y-2">
+            {% for message in messages %}
+              <div class="flex items-center justify-between rounded-xl p-4 text-sm font-medium {% if message.tags == 'error' %}bg-rose-100 text-rose-800 border border-rose-200{% else %}bg-emerald-100 text-emerald-800 border border-emerald-200{% endif %}">
+                <span>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" class="text-xs opacity-60 hover:opacity-100">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="border-t bg-white p-4 text-sm text-gray-500">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+          <div>© 2026 LOOK-TECH. Tous droits réservés.</div>
+          <div class="flex items-center gap-4">
+            <a href="#" class="text-gray-600 hover:text-gray-800">LinkedIn</a>
+            <a href="#" class="text-gray-600 hover:text-gray-800">Twitter</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+  {% endblock %}
+
+</body>
+</html>
