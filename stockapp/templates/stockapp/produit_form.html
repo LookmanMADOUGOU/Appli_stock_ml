@@ -24,28 +24,40 @@
           </div>
         {% endif %}
 
-        <div>
-          <label for="{{ form.nom.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.nom.label }}</label>
-          {{ form.nom }}
-          {% if form.nom.errors %}
-            <p class="mt-1 text-xs text-rose-600">{{ form.nom.errors.0 }}</p>
-          {% endif %}
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="{{ form.nom.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.nom.label }}</label>
+            {{ form.nom }}
+            {% if form.nom.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ form.nom.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="{{ form.reference.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.reference.label }}</label>
+            {{ form.reference }}
+            {% if form.reference.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ form.reference.errors.0 }}</p>
+            {% endif %}
+          </div>
         </div>
 
-        <div>
-          <label for="{{ form.reference.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.reference.label }}</label>
-          {{ form.reference }}
-          {% if form.reference.errors %}
-            <p class="mt-1 text-xs text-rose-600">{{ form.reference.errors.0 }}</p>
-          {% endif %}
-        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="{{ form.categorie.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.categorie.label }}</label>
+            {{ form.categorie }}
+            {% if form.categorie.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ form.categorie.errors.0 }}</p>
+            {% endif %}
+          </div>
 
-        <div>
-          <label for="{{ form.categorie.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.categorie.label }}</label>
-          {{ form.categorie }}
-          {% if form.categorie.errors %}
-            <p class="mt-1 text-xs text-rose-600">{{ form.categorie.errors.0 }}</p>
-          {% endif %}
+          <div>
+            <label for="{{ form.prix_unitaire.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.prix_unitaire.label }}</label>
+            {{ form.prix_unitaire }}
+            {% if form.prix_unitaire.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ form.prix_unitaire.errors.0 }}</p>
+            {% endif %}
+          </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">

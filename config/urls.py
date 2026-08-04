@@ -30,4 +30,6 @@ urlpatterns = [
     path('api/', include('stockapp.api.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('service-worker.js', stock_views.service_worker, name='service-worker'),
+    path('manifest.json', stock_views.pwa_manifest, name='manifest'),
 ]

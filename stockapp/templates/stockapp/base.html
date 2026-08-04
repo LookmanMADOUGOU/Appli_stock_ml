@@ -11,8 +11,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{% static 'stockapp/css/theme.css' %}">
   <script src="{% static 'stockapp/js/ui.js' %}" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }</style>
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0891b2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Stock IA">
+  <link rel="apple-touch-icon" href="/static/stockapp/images/icon-192.jpg">
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-800">
   <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg" href="#main-content">Aller au contenu</a>
@@ -82,15 +87,18 @@
           <h1 class="text-lg font-semibold text-gray-800">{% block page_title %}Tableau de bord{% endblock %}</h1>
         </div>
 
-        <div class="flex items-center gap-4">
-          <div class="relative">
-            <input type="search" placeholder="Recherche" class="h-10 w-72 rounded-full border border-gray-200 bg-white px-4 pr-10 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
-            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-          </div>
-          <button class="p-2 rounded-full bg-emerald-100 text-emerald-700"><i class="fas fa-bell"></i></button>
+        <div class="flex items-center gap-3">
+          <form method="post" action="{% url 'stockapp:envoyer-resume-journalier' %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-indigo-50 border border-indigo-200 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-all shadow-sm"
+                    title="Envoyer le bilan CA/Bénéfice du jour par notification">
+              <i class="fas fa-paper-plane text-indigo-600"></i>
+              <span>Envoyer Bilan Jour 📲</span>
+            </button>
+          </form>
           <div class="flex items-center gap-2">
-            <div class="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">U</div>
-            <div class="hidden sm:block text-sm">Utilisateur</div>
+            <div class="h-9 w-9 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-sm">A</div>
+            <div class="hidden sm:block text-sm font-semibold text-slate-700">Admin</div>
           </div>
         </div>
       </header>
@@ -122,5 +130,62 @@
   </div>
   {% endblock %}
 
+  <!-- Floating PWA Install Banner for Mobile Browsers -->
+  <div id="pwa-install-banner" class="hidden fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-4 text-white shadow-2xl border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <img src="/static/stockapp/images/icon-192.jpg" alt="Stock IA" class="h-12 w-12 rounded-xl shadow-md border border-cyan-400/40">
+      <div>
+        <div class="font-bold text-sm text-white">Installer l'application Stock IA</div>
+        <div class="text-xs text-cyan-200">Accès rapide sur l'écran d'accueil de votre smartphone 📲</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 self-end sm:self-auto">
+      <button id="pwa-close-btn" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Plus tard</button>
+      <button id="pwa-install-btn" class="btn btn-primary !py-1.5 !px-4 text-xs font-bold shadow-lg">
+        <i class="fas fa-download"></i> Installer
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(reg) { console.log('PWA ServiceWorker actif (Scope: ' + reg.scope + ')'); })
+          .catch(function(err) { console.log('PWA ServiceWorker erreur:', err); });
+      });
+    }
+
+    // PWA Install Prompt Handler
+    let deferredPrompt;
+    const installBanner = document.getElementById('pwa-install-banner');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const closeBtn = document.getElementById('pwa-close-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBanner) installBanner.classList.remove('hidden');
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`PWA choice: ${outcome}`);
+          deferredPrompt = null;
+        }
+        if (installBanner) installBanner.classList.add('hidden');
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        if (installBanner) installBanner.classList.add('hidden');
+      });
+    }
+  </script>
 </body>
 </html>

@@ -1,7 +1,9 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
@@ -212,3 +214,174 @@ class ApiEndpointsTests(TestCase):
         produit = Produit.objects.get(reference='TEST-ALERT')
         self.assertTrue(produit.rupture)
         self.assertTrue(AlerteRupture.objects.filter(produit=produit, est_resolue=False).exists())
+
+
+class VentePrixUnitaireTests(TestCase):
+    def setUp(self):
+        self.categorie = Categorie.objects.create(nom='Boissons')
+        self.produit = Produit.objects.create(
+            categorie=self.categorie,
+            nom='Jus d Orange',
+            reference='JUS-001',
+            stock_actuel=50,
+            seuil_alerte=5,
+            prix_unitaire=500.00,
+        )
+
+    def test_vente_copies_produit_prix_unitaire_when_blank(self):
+        vente = Vente.objects.create(produit=self.produit, quantite=4)
+        self.assertEqual(vente.prix_unitaire, 500.00)
+        self.assertEqual(vente.prix_total, 2000.00)
+
+    def test_vente_calculates_prix_total(self):
+        vente = Vente.objects.create(produit=self.produit, quantite=3, prix_unitaire=450.00)
+        self.assertEqual(vente.prix_unitaire, 450.00)
+        self.assertEqual(vente.prix_total, 1350.00)
+
+    def test_ventes_view_returns_journal_aggregation(self):
+        user = User.objects.create_user(username='testuser', password='password')
+        self.client.force_login(user)
+
+        Vente.objects.create(produit=self.produit, quantite=4, prix_unitaire=500.00)
+        Vente.objects.create(produit=self.produit, quantite=2, prix_unitaire=500.00)
+
+        url = reverse('stockapp:ventes-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('journal_ventes', response.context)
+        
+        journal = response.context['journal_ventes']
+        self.assertEqual(len(journal), 1)
+        self.assertEqual(journal[0]['produit_nom'], 'Jus d Orange')
+        self.assertEqual(journal[0]['total_quantite'], 6)
+        self.assertEqual(journal[0]['decomposition'], '4 + 2')
+        self.assertEqual(journal[0]['montant_total'], 3000.00)
+        self.assertEqual(response.context['chiffre_affaires_jour'], 3000.00)
+
+    def test_vente_calculates_benefice_and_margin(self):
+        self.produit.prix_achat = 300.00
+        self.produit.save()
+
+        vente = Vente.objects.create(produit=self.produit, quantite=5, prix_unitaire=500.00)
+        self.assertEqual(vente.prix_achat, 300.00)
+        self.assertEqual(vente.marge_unitaire, 200.00)
+        self.assertEqual(vente.benefice_total, 1000.00)
+
+    def test_telecharger_recu_pdf_view(self):
+        user = User.objects.create_user(username='pdfuser', password='password')
+        self.client.force_login(user)
+        vente = Vente.objects.create(produit=self.produit, quantite=2, prix_unitaire=500.00)
+
+        url = reverse('stockapp:vente-recu-pdf', args=[vente.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(len(response.content) > 0)
+
+    def test_ventes_view_periode_filtering(self):
+        user = User.objects.create_user(username='periodeuser', password='password')
+        self.client.force_login(user)
+
+        Vente.objects.create(produit=self.produit, quantite=2, prix_unitaire=500.00)
+
+        for p in ['jour', 'semaine', 'mois', 'annee']:
+            url = reverse('stockapp:ventes-list') + f'?periode={p}'
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.context['periode'], p)
+            self.assertIn('chiffre_affaires_periode', response.context)
+
+
+class PurchaseOrderAndNotificationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='iauser', password='password')
+        self.client.force_login(self.user)
+
+        self.categorie = Categorie.objects.create(nom='High Tech')
+        self.produit_rupture = Produit.objects.create(
+            categorie=self.categorie,
+            nom='Ordinateur Portable',
+            reference='ORD-001',
+            stock_actuel=1,
+            seuil_alerte=5,
+            prix_unitaire=500000.00,
+            prix_achat=350000.00,
+        )
+
+    def test_purchase_order_data_generation(self):
+        from stockapp.services.purchase_order_service import generate_purchase_order_data
+        data = generate_purchase_order_data()
+        self.assertGreaterEqual(data['nb_produits'], 1)
+        self.assertEqual(data['items'][0]['produit_id'], self.produit_rupture.id)
+        self.assertGreater(data['total_articles'], 0)
+
+    def test_purchase_order_pdf_generation(self):
+        from stockapp.services.purchase_order_service import generate_purchase_order_data, generate_purchase_order_pdf
+        data = generate_purchase_order_data()
+        pdf_bytes = generate_purchase_order_pdf(data)
+        self.assertIsInstance(pdf_bytes, bytes)
+        self.assertTrue(len(pdf_bytes) > 0)
+
+    def test_purchase_order_views_and_validation(self):
+        url = reverse('stockapp:bon-de-commande')
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        pdf_url = reverse('stockapp:bon-de-commande-pdf')
+        res_pdf = self.client.get(pdf_url)
+        self.assertEqual(res_pdf.status_code, 200)
+        self.assertEqual(res_pdf['Content-Type'], 'application/pdf')
+
+        valider_url = reverse('stockapp:bon-de-commande-valider')
+        res_val = self.client.post(valider_url)
+        self.assertEqual(res_val.status_code, 302)
+        self.assertTrue(Approvisionnement.objects.filter(produit=self.produit_rupture).exists())
+
+    def test_daily_summary_generation_and_view(self):
+        from stockapp.services.alert_service import generer_et_envoyer_resume_journalier
+        Vente.objects.create(produit=self.produit_rupture, quantite=2, prix_unitaire=500000.00, prix_achat=350000.00)
+
+        res = generer_et_envoyer_resume_journalier()
+        self.assertEqual(res['chiffre_affaires'], 1000000.00)
+        self.assertEqual(res['benefice_net'], 300000.00)
+        self.assertEqual(res['total_articles'], 2)
+
+        view_url = reverse('stockapp:envoyer-resume-journalier')
+        response = self.client.post(view_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_ml_seasonality_prediction(self):
+        from stockapp.services.prediction_service import get_demand_forecast, predict_sales
+        # Seed 7 sales on 7 distinct days to trigger RandomForest
+        now = timezone.now()
+        for i in range(7):
+            v = Vente.objects.create(produit=self.produit_rupture, quantite=3)
+            Vente.objects.filter(pk=v.pk).update(date_vente=now - timedelta(days=i))
+
+        forecast = get_demand_forecast(self.produit_rupture, days_ahead=7)
+        self.assertIsInstance(forecast, dict)
+        self.assertIn('predictions', forecast)
+        self.assertEqual(len(forecast['predictions']), 7)
+
+        pred_sales = predict_sales(self.produit_rupture)
+        self.assertIsInstance(pred_sales, float)
+
+
+class PWATests(TestCase):
+    def test_service_worker_endpoint(self):
+        url = reverse('stockapp:service-worker')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/javascript')
+        self.assertEqual(response['Service-Worker-Allowed'], '/')
+
+    def test_pwa_manifest_endpoint(self):
+        url = reverse('stockapp:manifest')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/manifest+json')
+        self.assertIn('Look-Tech', response.content.decode('utf-8'))
+
+
+
+

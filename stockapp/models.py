@@ -24,6 +24,12 @@ class Produit(models.Model):
     reference = models.CharField(max_length=100, unique=True)
     stock_actuel = models.IntegerField(default=0)
     seuil_alerte = models.IntegerField(default=10)
+    prix_unitaire = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    prix_achat = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    @property
+    def marge_unitaire(self):
+        return self.prix_unitaire - self.prix_achat
 
     @property
     def rupture(self):
@@ -79,13 +85,35 @@ class Produit(models.Model):
 class Vente(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField()
+    prix_unitaire = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    prix_achat = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     date_vente = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def prix_total(self):
+        return self.quantite * self.prix_unitaire
+
+    @property
+    def marge_unitaire(self):
+        return self.prix_unitaire - self.prix_achat
+
+    @property
+    def benefice_total(self):
+        return (self.prix_unitaire - self.prix_achat) * self.quantite
+
+    def save(self, *args, **kwargs):
+        if not self.prix_unitaire and self.produit:
+            self.prix_unitaire = self.produit.prix_unitaire
+        if not self.prix_achat and self.produit:
+            self.prix_achat = self.produit.prix_achat
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['-date_vente']
 
     def __str__(self):
-        return f"{self.produit.nom} - {self.quantite}"
+        return f"{self.produit.nom} - {self.quantite} x {self.prix_unitaire}"
+
 
 
 class Approvisionnement(models.Model):

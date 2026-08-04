@@ -21,9 +21,9 @@
           <h2 class="text-xl font-semibold text-slate-900">Derniers approvisionnements</h2>
           <p class="text-sm text-slate-500">Suivi des apports en stock par produit et fournisseur.</p>
         </div>
-        <button onclick="document.getElementById('modal-ajouter-appro').classList.remove('hidden')" class="btn btn-primary">
-          <i class="fas fa-truck-loading"></i> Ajouter approvisionnement
-        </button>
+        <div class="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Les approvisionnements sont consultables ici, mais la gestion se fait uniquement via l'administration Django.
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -34,7 +34,6 @@
               <th>Quantité</th>
               <th>Fournisseur</th>
               <th>Date</th>
-              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -44,18 +43,10 @@
                 <td><span class="rounded-md bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700">+{{ appro.quantite }}</span></td>
                 <td class="text-sm text-slate-600">{{ appro.fournisseur }}</td>
                 <td class="text-sm text-slate-500">{{ appro.date_approvisionnement }}</td>
-                <td class="text-right">
-                  <form method="post" action="{% url 'stockapp:approvisionnement-supprimer' appro.id %}" onsubmit="return confirm('Annuler cet approvisionnement ? Le stock sera déduit.');" class="inline">
-                    {% csrf_token %}
-                    <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Annuler cet approvisionnement">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </form>
-                </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">Aucun approvisionnement à afficher.</td>
+                <td colspan="4" class="px-4 py-6 text-center text-sm text-slate-400">Aucun approvisionnement à afficher.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -64,33 +55,4 @@
     </div>
   </section>
 
-  <!-- Modal Ajouter Approvisionnement -->
-  <div id="modal-ajouter-appro" class="hidden modal-backdrop z-50 p-4">
-    <div class="modal max-w-md">
-      <div class="mb-4 flex items-center justify-between border-b pb-3">
-        <h3 class="text-lg font-semibold text-slate-900">Nouvel Approvisionnement</h3>
-        <button onclick="document.getElementById('modal-ajouter-appro').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
-      </div>
-
-      <form method="post" action="{% url 'stockapp:approvisionnements-list' %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Produit</label>
-          {{ form.produit }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Quantité à ajouter</label>
-          {{ form.quantite }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Fournisseur</label>
-          {{ form.fournisseur }}
-        </div>
-        <div class="flex items-center justify-end gap-3 border-t pt-4">
-          <button type="button" onclick="document.getElementById('modal-ajouter-appro').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter au stock</button>
-        </div>
-      </form>
-    </div>
-  </div>
 {% endblock %}
