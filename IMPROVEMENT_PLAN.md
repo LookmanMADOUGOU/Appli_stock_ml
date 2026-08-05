@@ -50,6 +50,12 @@ Améliorer la robustesse, la maintenabilité et la préparation à la production
 - Ajouter Sentry.
 - Ajouter des métriques de performance.
 
+## Branches et workflow
+
+- `main` : flux stable, destiné à la production ou à une version de référence propre.
+- `advanced-features` : flux expérimental, destiné aux nouvelles fonctionnalités et prototypes UI.
+- Maintenir `main` propre et stable, en utilisant `advanced-features` pour les développements en cours.
+
 ## Roadmap
 
 1. Sécuriser l'API

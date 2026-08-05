@@ -5,8 +5,50 @@ Ce document explique comment démarrer rapidement le projet, utiliser le dashboa
 ## 1. Activer l'environnement
 
 ```powershell
-.\stock\Scripts\Activate.ps1
+.\stockml\Scripts\Activate.ps1
 ```
+
+## Branches du projet
+
+- `main` : version stable. Toutes les actions de gestion (ajouts, modifications, suppressions) doivent être effectuées via l'administration Django.
+- `advanced-features` : version avancée avec les dernières améliorations UI et fonctions expérimentales (PWA, commandes IA, enrichissements de tableau de bord).
+
+Changer de branche :
+
+```bash
+git checkout main
+```
+
+```bash
+git checkout advanced-features
+```
+
+> Astuce : vérifiez toujours la branche active avant de lancer le serveur ou d’appliquer des migrations.
+
+## Avant d'appliquer des migrations ou de lancer le serveur
+
+- **Vérifier la branche active :**
+
+```bash
+git status --porcelain --branch
+```
+
+- **Récupérer les dernières modifications de `main` (si vous êtes sur `main`) :**
+
+```bash
+git fetch origin
+git pull origin main
+```
+
+- **Si vous travaillez sur une branche de fonctionnalité, synchronisez-la avec `main` avant d'exécuter des migrations :**
+
+```bash
+git checkout feature/<nom_de_la_feature>
+git fetch origin
+git merge origin/main
+```
+
+> Important : Exécuter les migrations sur `main` en production uniquement après revue et sauvegarde de la base.
 
 ## 2. Installer les dépendances
 

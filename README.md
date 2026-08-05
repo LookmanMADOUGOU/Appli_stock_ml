@@ -15,7 +15,7 @@ Le projet propose :
 1. Activer l'environnement virtuel :
 
 ```powershell
-.\stock\Scripts\Activate.ps1
+.\stockml\Scripts\Activate.ps1
 ```
 
 2. Installer les dépendances :
@@ -41,6 +41,66 @@ python manage.py createsuperuser
 ```bash
 python manage.py runserver
 ```
+
+## Branches du projet
+
+- `main` : branche stable. Elle contient la version de base du projet avec le dashboard principal, la gestion des données via l'administration Django et une interface de consultation seule sur le dashboard.
+- `advanced-features` : branche expérimentale. Elle contient les dernières évolutions UI et produit, notamment le support PWA, les bons de commande IA, les enrichissements de dashboard et les prototypes de fonctionnalités avancées.
+
+### Utilisation recommandée
+
+- Sur `main`, effectuez les tests et la gestion de données via l'administration Django.
+- Sur `advanced-features`, testez les nouvelles fonctionnalités sans impacter la version stable.
+
+### Changer de branche
+
+```bash
+git checkout main
+```
+
+```bash
+git checkout advanced-features
+```
+
+## Branching & workflow
+
+- **Créer une branche locale basée sur `main` :**
+
+```bash
+git checkout -b feature/<nom_de_la_feature> main
+```
+
+- **Pusher la branche distante :**
+
+```bash
+git push -u origin feature/<nom_de_la_feature>
+```
+
+- **Mettre à jour une branche avec les derniers changements de `main` :**
+
+```bash
+git checkout feature/<nom_de_la_feature>
+git fetch origin
+git merge origin/main
+```
+
+- **Fusionner la branche via Pull Request (PR) :**
+
+1. Pusher les commits sur la branche distante.
+2. Créer une PR sur GitHub visant `main`.
+3. Exécuter les tests, demander revue, puis fusionner.
+
+- **Supprimer une branche après fusion :**
+
+```bash
+git branch -d feature/<nom_de_la_feature>
+git push origin --delete feature/<nom_de_la_feature>
+```
+
+- **Conseils pratiques :**
+  - Garder `main` stable et réversible (utiliser PRs et revues).
+  - Travailler sur `advanced-features` pour expérimentations lourdes.
+  - Rebaser localement pour une histoire propre, ou merge si préféré.
 
 ## Accès principaux
 
@@ -165,3 +225,4 @@ python manage.py test -v 2
 
 - Ajouter `reportlab` dans `requirements.txt` si l'export PDF est utilisé.
 - SQLite convient pour le développement ; PostgreSQL est recommandé en production.
+- La branche `main` est destinée à rester stable. Utilisez `advanced-features` pour tester les nouvelles extensions sans impacter la version principale.
