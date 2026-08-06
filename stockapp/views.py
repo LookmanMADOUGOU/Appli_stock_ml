@@ -82,23 +82,16 @@ def dashboard(request):
 
 
 # ==================== PRODUITS ====================
+# ==================== PRODUITS ====================
 
 @login_required
 def produits(request):
+    # Les opérations d'ajout / modification / suppression via le dashboard
+    # sont désactivées sur la branche `main`. Utilisez l'administration Django.
     if request.method == 'POST':
-        form = ProduitForm(request.POST)
-        if form.is_valid():
-            produit = form.save()
-            if produit.rupture:
-                creer_alerte_si_necessaire(produit)
-            else:
-                resoudre_alerte_si_necessaire(produit)
-            messages.success(request, f"Produit '{produit.nom}' ajouté avec succès.")
-            return redirect('stockapp:produits-list')
-        else:
-            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
-    else:
-        form = ProduitForm()
+        messages.warning(request, "Les opérations d'ajout/modification/suppression sont disponibles uniquement via l'administration Django.")
+        return redirect('stockapp:produits-list')
+    form = None
 
     produits_qs = Produit.objects.select_related('categorie').order_by('nom')
     total_produits = produits_qs.count()
@@ -111,65 +104,15 @@ def produits(request):
     })
 
 
-@login_required
-def produit_ajouter(request):
-    if request.method == 'POST':
-        form = ProduitForm(request.POST)
-        if form.is_valid():
-            produit = form.save()
-            if produit.rupture:
-                creer_alerte_si_necessaire(produit)
-            else:
-                resoudre_alerte_si_necessaire(produit)
-            messages.success(request, f"Produit '{produit.nom}' créé avec succès.")
-            return redirect('stockapp:produits-list')
-    else:
-        form = ProduitForm()
-    return render(request, 'stockapp/produit_form.html', {'form': form, 'title': 'Ajouter un produit'})
-
-
-@login_required
-def produit_modifier(request, pk):
-    produit = get_object_or_404(Produit, pk=pk)
-    if request.method == 'POST':
-        form = ProduitForm(request.POST, instance=produit)
-        if form.is_valid():
-            produit = form.save()
-            if produit.rupture:
-                creer_alerte_si_necessaire(produit)
-            else:
-                resoudre_alerte_si_necessaire(produit)
-            messages.success(request, f"Produit '{produit.nom}' modifié avec succès.")
-            return redirect('stockapp:produits-list')
-    else:
-        form = ProduitForm(instance=produit)
-    return render(request, 'stockapp/produit_form.html', {'form': form, 'produit': produit, 'title': 'Modifier le produit'})
-
-
-@login_required
-def produit_supprimer(request, pk):
-    if request.method == 'POST':
-        produit = get_object_or_404(Produit, pk=pk)
-        nom = produit.nom
-        produit.delete()
-        messages.success(request, f"Produit '{nom}' supprimé.")
-    return redirect('stockapp:produits-list')
-
-
 # ==================== CATÉGORIES ====================
 
 @login_required
 def categories(request):
+    # Operations via dashboard disabled; use Django admin.
     if request.method == 'POST':
-        form = CategorieForm(request.POST)
-        if form.is_valid():
-            cat = form.save()
-            messages.success(request, f"Catégorie '{cat.nom}' ajoutée avec succès.")
-            return redirect('stockapp:categories-list')
-        else:
-            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
-    else:
-        form = CategorieForm()
+        messages.warning(request, "Les opérations d'ajout/modification/suppression sont disponibles uniquement via l'administration Django.")
+        return redirect('stockapp:categories-list')
+    form = None
 
     categories_qs = Categorie.objects.annotate(nb_produits=Count('produits')).order_by('-nb_produits', 'nom')
     total_categories = categories_qs.count()
@@ -182,44 +125,14 @@ def categories(request):
     })
 
 
-@login_required
-def categorie_modifier(request, pk):
-    categorie = get_object_or_404(Categorie, pk=pk)
-    if request.method == 'POST':
-        form = CategorieForm(request.POST, instance=categorie)
-        if form.is_valid():
-            cat = form.save()
-            messages.success(request, f"Catégorie '{cat.nom}' modifiée avec succès.")
-            return redirect('stockapp:categories-list')
-    else:
-        form = CategorieForm(instance=categorie)
-    return render(request, 'stockapp/categorie_form.html', {'form': form, 'categorie': categorie, 'title': 'Modifier la catégorie'})
-
-
-@login_required
-def categorie_supprimer(request, pk):
-    if request.method == 'POST':
-        categorie = get_object_or_404(Categorie, pk=pk)
-        nom = categorie.nom
-        categorie.delete()
-        messages.success(request, f"Catégorie '{nom}' supprimée.")
-    return redirect('stockapp:categories-list')
-
-
 # ==================== VENTES ====================
 
 @login_required
 def ventes(request):
     if request.method == 'POST':
-        form = VenteForm(request.POST)
-        if form.is_valid():
-            vente = form.save()
-            messages.success(request, f"Vente de {vente.quantite}x '{vente.produit.nom}' enregistrée.")
-            return redirect('stockapp:ventes-list')
-        else:
-            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
-    else:
-        form = VenteForm()
+        messages.warning(request, "Les enregistrements de ventes via le dashboard sont désactivés. Utilisez l'administration Django.")
+        return redirect('stockapp:ventes-list')
+    form = None
 
     ventes_qs = Vente.objects.select_related('produit').order_by('-date_vente')[:50]
     total_ventes = Vente.objects.aggregate(total=Sum('quantite'))['total'] or 0
@@ -230,14 +143,22 @@ def ventes(request):
     })
 
 
+# ==================== VENTES ====================
+
 @login_required
-def vente_supprimer(request, pk):
+def ventes(request):
     if request.method == 'POST':
-        vente = get_object_or_404(Vente, pk=pk)
-        nom = vente.produit.nom
-        vente.delete() # Signal pre_delete triggers restore_sale automatically
-        messages.success(request, f"Vente de '{nom}' supprimée. Le stock a été réapprovisionné.")
-    return redirect('stockapp:ventes-list')
+        messages.warning(request, "Les enregistrements de ventes via le dashboard sont désactivés. Utilisez l'administration Django.")
+        return redirect('stockapp:ventes-list')
+    form = None
+
+    ventes_qs = Vente.objects.select_related('produit').order_by('-date_vente')[:50]
+    total_ventes = Vente.objects.aggregate(total=Sum('quantite'))['total'] or 0
+    return render(request, 'stockapp/ventes.html', {
+        'ventes': ventes_qs,
+        'total_ventes': total_ventes,
+        'form': form,
+    })
 
 
 # ==================== APPROVISIONNEMENTS ====================
@@ -245,15 +166,9 @@ def vente_supprimer(request, pk):
 @login_required
 def approvisionnements(request):
     if request.method == 'POST':
-        form = ApprovisionnementForm(request.POST)
-        if form.is_valid():
-            appro = form.save()
-            messages.success(request, f"Approvisionnement de +{appro.quantite} '{appro.produit.nom}' enregistré.")
-            return redirect('stockapp:approvisionnements-list')
-        else:
-            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
-    else:
-        form = ApprovisionnementForm()
+        messages.warning(request, "Les approvisionnements via le dashboard sont désactivés. Utilisez l'administration Django.")
+        return redirect('stockapp:approvisionnements-list')
+    form = None
 
     approvisionnements_qs = Approvisionnement.objects.select_related('produit').order_by('-date_approvisionnement')[:50]
     total_approvisionnements = Approvisionnement.objects.aggregate(total=Sum('quantite'))['total'] or 0
@@ -262,16 +177,6 @@ def approvisionnements(request):
         'total_approvisionnements': total_approvisionnements,
         'form': form,
     })
-
-
-@login_required
-def approvisionnement_supprimer(request, pk):
-    if request.method == 'POST':
-        appro = get_object_or_404(Approvisionnement, pk=pk)
-        nom = appro.produit.nom
-        appro.delete() # Signal pre_delete triggers revert_approvisionnement automatically
-        messages.success(request, f"Approvisionnement de '{nom}' annulé. Le stock a été déduit.")
-    return redirect('stockapp:approvisionnements-list')
 
 
 # ==================== INFOS ET EXPORT ====================
