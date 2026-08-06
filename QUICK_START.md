@@ -10,8 +10,9 @@ Ce document explique comment démarrer rapidement le projet, utiliser le dashboa
 
 ## Branches du projet
 
-- `main` : version stable. Toutes les actions de gestion (ajouts, modifications, suppressions) doivent être effectuées via l'administration Django.
-- `advanced-features` : version avancée avec les dernières améliorations UI et fonctions expérimentales (PWA, commandes IA, enrichissements de tableau de bord).
+
+- `main` : version stable. Toutes les actions de gestion (ajouts, modifications, suppressions) doivent être effectuées via l'administration Django. Le dashboard sert uniquement à la consultation sur `main`.
+- `advanced-features` : version avancée avec les dernières améliorations UI et fonctions expérimentales (PWA, commandes IA, enrichissements de tableau de bord). Sur cette branche, des opérations expérimentales depuis le dashboard peuvent être disponibles.
 
 Changer de branche :
 

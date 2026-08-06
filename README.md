@@ -49,8 +49,8 @@ python manage.py runserver
 
 ### Utilisation recommandée
 
-- Sur `main`, effectuez les tests et la gestion de données via l'administration Django.
-- Sur `advanced-features`, testez les nouvelles fonctionnalités sans impacter la version stable.
+- Sur `main`, effectuez les tests et la gestion de données via l'administration Django. Toutes les opérations de création, modification et suppression (CRUD) doivent être effectuées depuis l'interface d'administration — le dashboard est consultatif.
+- Sur `advanced-features`, testez les nouvelles fonctionnalités sans impacter la version stable. Cette branche peut contenir des prototypes où certaines opérations sont disponibles depuis le dashboard.
 
 ### Changer de branche
 

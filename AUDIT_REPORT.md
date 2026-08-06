@@ -15,8 +15,8 @@ Application Django de gestion de stock avec alertes, prévisions et API REST.
 
 ## Branches
 
-- `main` : version stable, conçue pour rester propre et simple. La gestion des objets se fait principalement via l’administration Django, tandis que le dashboard fournit une vue de consultation et de suivi.
-- `advanced-features` : version expérimentale et évolutive. Elle active des prototypes UI, des commandes IA, un support PWA et des améliorations de navigation.
+
+- Remarque : Sur la branche `main`, toutes les opérations CRUD doivent être effectuées via l'administration Django — le dashboard est consultatif. Sur `advanced-features`, certaines fonctionnalités expérimentales peuvent permettre des actions depuis le dashboard.
 
 ## Modèles métiers
 
