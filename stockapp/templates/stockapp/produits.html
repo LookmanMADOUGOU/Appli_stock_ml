@@ -21,11 +21,7 @@
           <h2 class="text-xl font-semibold text-slate-900">Liste des produits</h2>
           <p class="text-sm text-slate-500">Tous les produits et leur état de stock.</p>
         </div>
-        <div class="flex flex-wrap gap-3">
-          <button onclick="document.getElementById('modal-ajouter-produit').classList.remove('hidden')" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Ajouter produit
-          </button>
-        </div>
+        <div class="text-sm text-slate-500">Les opérations d'ajout/modification/suppression sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -51,17 +47,7 @@
                 <td class="text-sm text-slate-500">{{ produit.seuil_alerte }}</td>
                 <td>{% if produit.rupture %}<span class="badge badge-danger">Rupture</span>{% else %}<span class="badge badge-success">OK</span>{% endif %}</td>
                 <td class="text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <a href="{% url 'stockapp:produit-modifier' produit.id %}" class="p-1.5 text-slate-600 hover:text-cyan-600" title="Modifier">
-                      <i class="fas fa-edit"></i>
-                    </a>
-                    <form method="post" action="{% url 'stockapp:produit-supprimer' produit.id %}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce produit ?');" class="inline">
-                      {% csrf_token %}
-                      <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Supprimer">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
-                    </form>
-                  </div>
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
                 </td>
               </tr>
             {% empty %}
@@ -75,43 +61,5 @@
     </div>
   </section>
 
-  <!-- Modal Ajouter Produit -->
-  <div id="modal-ajouter-produit" class="hidden modal-backdrop z-50 p-4">
-    <div class="modal">
-      <div class="mb-4 flex items-center justify-between border-b pb-3">
-        <h3 class="text-lg font-semibold text-slate-900">Nouveau Produit</h3>
-        <button onclick="document.getElementById('modal-ajouter-produit').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
-      </div>
-
-      <form method="post" action="{% url 'stockapp:produits-list' %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Nom du produit</label>
-          {{ form.nom }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Référence</label>
-          {{ form.reference }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Catégorie</label>
-          {{ form.categorie }}
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Stock actuel</label>
-            {{ form.stock_actuel }}
-          </div>
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Seuil d'alerte</label>
-            {{ form.seuil_alerte }}
-          </div>
-        </div>
-        <div class="flex items-center justify-end gap-3 border-t pt-4">
-          <button type="button" onclick="document.getElementById('modal-ajouter-produit').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Créer</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}

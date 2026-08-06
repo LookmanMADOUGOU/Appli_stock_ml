@@ -5,40 +5,10 @@
 {% block content %}
   <section class="mx-auto max-w-xl py-8">
     <div class="card-glow">
-      <div class="mb-6 flex items-center justify-between border-b pb-4">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-900">{{ title }}</h2>
-          <p class="text-sm text-slate-500">Formulaire de gestion d'une catégorie de produits.</p>
-        </div>
-        <a href="{% url 'stockapp:categories-list' %}" class="btn btn-ghost text-sm">
-          <i class="fas fa-arrow-left"></i> Retour
-        </a>
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-slate-900">Accès formulaire restreint</h2>
+        <p class="text-sm text-slate-500">La création et la modification des catégories sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></p>
       </div>
-
-      <form method="post" class="space-y-5">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-          <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-            {{ form.non_field_errors }}
-          </div>
-        {% endif %}
-
-        <div>
-          <label for="{{ form.nom.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.nom.label }}</label>
-          {{ form.nom }}
-          {% if form.nom.errors %}
-            <p class="mt-1 text-xs text-rose-600">{{ form.nom.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div class="flex items-center justify-end gap-3 border-t pt-5">
-          <a href="{% url 'stockapp:categories-list' %}" class="btn btn-ghost">Annuler</a>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> Enregistrer
-          </button>
-        </div>
-      </form>
     </div>
   </section>
 {% endblock %}

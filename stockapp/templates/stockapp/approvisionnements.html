@@ -21,9 +21,7 @@
           <h2 class="text-xl font-semibold text-slate-900">Derniers approvisionnements</h2>
           <p class="text-sm text-slate-500">Suivi des apports en stock par produit et fournisseur.</p>
         </div>
-        <button onclick="document.getElementById('modal-ajouter-appro').classList.remove('hidden')" class="btn btn-primary">
-          <i class="fas fa-truck-loading"></i> Ajouter approvisionnement
-        </button>
+        <div class="text-sm text-slate-500">Les approvisionnements sont gérés via l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Gérer dans l'admin</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -45,12 +43,7 @@
                 <td class="text-sm text-slate-600">{{ appro.fournisseur }}</td>
                 <td class="text-sm text-slate-500">{{ appro.date_approvisionnement }}</td>
                 <td class="text-right">
-                  <form method="post" action="{% url 'stockapp:approvisionnement-supprimer' appro.id %}" onsubmit="return confirm('Annuler cet approvisionnement ? Le stock sera déduit.');" class="inline">
-                    {% csrf_token %}
-                    <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Annuler cet approvisionnement">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </form>
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
                 </td>
               </tr>
             {% empty %}
@@ -64,33 +57,5 @@
     </div>
   </section>
 
-  <!-- Modal Ajouter Approvisionnement -->
-  <div id="modal-ajouter-appro" class="hidden modal-backdrop z-50 p-4">
-    <div class="modal max-w-md">
-      <div class="mb-4 flex items-center justify-between border-b pb-3">
-        <h3 class="text-lg font-semibold text-slate-900">Nouvel Approvisionnement</h3>
-        <button onclick="document.getElementById('modal-ajouter-appro').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
-      </div>
-
-      <form method="post" action="{% url 'stockapp:approvisionnements-list' %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Produit</label>
-          {{ form.produit }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Quantité à ajouter</label>
-          {{ form.quantite }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Fournisseur</label>
-          {{ form.fournisseur }}
-        </div>
-        <div class="flex items-center justify-end gap-3 border-t pt-4">
-          <button type="button" onclick="document.getElementById('modal-ajouter-appro').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter au stock</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}

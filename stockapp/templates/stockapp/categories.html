@@ -21,9 +21,7 @@
           <h2 class="text-xl font-semibold text-slate-900">Liste des catégories</h2>
           <p class="text-sm text-slate-500">Des catégories organisées par nombre de produits.</p>
         </div>
-        <button onclick="document.getElementById('modal-ajouter-categorie').classList.remove('hidden')" class="btn btn-primary">
-          <i class="fas fa-plus"></i> Ajouter catégorie
-        </button>
+        <div class="text-sm text-slate-500">Les opérations d'ajout/modification/suppression sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -41,17 +39,7 @@
                 <td class="font-medium">{{ categorie.nom }}</td>
                 <td><span class="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-800">{{ categorie.nb_produits }} produits</span></td>
                 <td class="text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <a href="{% url 'stockapp:categorie-modifier' categorie.id %}" class="p-1.5 text-slate-600 hover:text-cyan-600" title="Modifier">
-                      <i class="fas fa-edit"></i>
-                    </a>
-                    <form method="post" action="{% url 'stockapp:categorie-supprimer' categorie.id %}" onsubmit="return confirm('Voulez-vous vraiment supprimer cette catégorie ?');" class="inline">
-                      {% csrf_token %}
-                      <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Supprimer">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
-                    </form>
-                  </div>
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
                 </td>
               </tr>
             {% empty %}
@@ -65,25 +53,5 @@
     </div>
   </section>
 
-  <!-- Modal Ajouter Catégorie -->
-  <div id="modal-ajouter-categorie" class="hidden modal-backdrop z-50 p-4">
-    <div class="modal max-w-md">
-      <div class="mb-4 flex items-center justify-between border-b pb-3">
-        <h3 class="text-lg font-semibold text-slate-900">Nouvelle Catégorie</h3>
-        <button onclick="document.getElementById('modal-ajouter-categorie').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
-      </div>
-
-      <form method="post" action="{% url 'stockapp:categories-list' %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Nom de la catégorie</label>
-          {{ form.nom }}
-        </div>
-        <div class="flex items-center justify-end gap-3 border-t pt-4">
-          <button type="button" onclick="document.getElementById('modal-ajouter-categorie').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Créer</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}

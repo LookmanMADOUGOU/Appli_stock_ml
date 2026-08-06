@@ -21,9 +21,7 @@
           <h2 class="text-xl font-semibold text-slate-900">Historique des ventes</h2>
           <p class="text-sm text-slate-500">Les dernières ventes enregistrées sur la plateforme.</p>
         </div>
-        <button onclick="document.getElementById('modal-enregistrer-vente').classList.remove('hidden')" class="btn btn-primary">
-          <i class="fas fa-cart-plus"></i> Enregistrer vente
-        </button>
+        <div class="text-sm text-slate-500">L'enregistrement ou la suppression de ventes via le dashboard est désactivé. <a href="{% url 'admin:index' %}" class="text-cyan-600">Gérer dans l'administration</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -43,12 +41,7 @@
                 <td><span class="rounded-md bg-cyan-50 px-2.5 py-1 text-sm font-semibold text-cyan-700">{{ vente.quantite }} unités</span></td>
                 <td class="text-sm text-slate-500">{{ vente.date_vente }}</td>
                 <td class="text-right">
-                  <form method="post" action="{% url 'stockapp:vente-supprimer' vente.id %}" onsubmit="return confirm('Annuler cette vente ? Le stock sera automatiquement restauré.');" class="inline">
-                    {% csrf_token %}
-                    <button type="submit" class="p-1.5 text-slate-600 hover:text-rose-600" title="Annuler cette vente">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </form>
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
                 </td>
               </tr>
             {% empty %}
@@ -62,29 +55,5 @@
     </div>
   </section>
 
-  <!-- Modal Enregistrer Vente -->
-  <div id="modal-enregistrer-vente" class="hidden modal-backdrop z-50 p-4">
-    <div class="modal max-w-md">
-      <div class="mb-4 flex items-center justify-between border-b pb-3">
-        <h3 class="text-lg font-semibold text-slate-900">Enregistrer une Vente</h3>
-        <button onclick="document.getElementById('modal-enregistrer-vente').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">&times;</button>
-      </div>
-
-      <form method="post" action="{% url 'stockapp:ventes-list' %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Produit vendue</label>
-          {{ form.produit }}
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Quantité</label>
-          {{ form.quantite }}
-        </div>
-        <div class="flex items-center justify-end gap-3 border-t pt-4">
-          <button type="button" onclick="document.getElementById('modal-enregistrer-vente').classList.add('hidden')" class="btn btn-ghost">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}
