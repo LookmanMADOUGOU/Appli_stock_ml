@@ -107,6 +107,7 @@ class ApiEndpointsTests(TestCase):
         self.client = APIClient()
         self.user = User.objects.create_user(username='testapiuser', password='testpassword')
         self.client.force_authenticate(user=self.user)
+        self.admin_user = User.objects.create_user(username='adminuser', password='adminpass', is_staff=True)
         self.categorie = Categorie.objects.create(nom='Maison')
         self.produit = Produit.objects.create(
             categorie=self.categorie,
@@ -185,6 +186,9 @@ class ApiEndpointsTests(TestCase):
     def test_import_csv_approvisionnement_no_double_increment(self):
         self.produit.stock_actuel = 5
         self.produit.save()
+
+        # Authenticate as admin for import endpoint
+        self.client.force_authenticate(user=self.admin_user)
         
         import io
         csv_data = "reference,quantite,fournisseur\nBR-001,10,Fournisseur Test\n"
@@ -205,6 +209,9 @@ class ApiEndpointsTests(TestCase):
         csv_file = io.BytesIO(csv_data.encode('utf-8'))
         csv_file.name = 'produits.csv'
         
+        # Authenticate as admin for import endpoint
+        self.client.force_authenticate(user=self.admin_user)
+
         url = reverse('produit-import-csv')
         response = self.client.post(url, {'file': csv_file}, format='multipart')
         self.assertEqual(response.status_code, 200)
