@@ -1,0 +1,110 @@
+{% extends "stockapp/base.html" %}
+
+{% block title %}Bon de Commande IA Fournisseur — Gestion Stock IA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-file-invoice text-cyan-600"></i> Bon de Commande Fournisseur Automatique (IA)
+      </h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Prédiction et suggestion automatique des approvisionnements requis pour les 7 prochains jours.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stockapp:bon-de-commande-pdf' %}" target="_blank" class="btn btn-secondary flex items-center gap-2">
+        <i class="fas fa-file-pdf text-red-500"></i> Télécharger PDF
+      </a>
+      <form action="{% url 'stockapp:bon-de-commande-valider' %}" method="post" onsubmit="return confirm('Voulez-vous transformer ces suggestions en approvisionnements réels et incrémenter le stock ?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary flex items-center gap-2 shadow-lg hover:shadow-cyan-500/20" {% if not order_data.items %}disabled{% endif %}>
+          <i class="fas fa-check-circle"></i> Commander & Incrémenter Stock (1-Clic)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="card p-4 border-l-4 border-l-cyan-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Produits à réapprovisionner</div>
+      <div class="text-2xl font-extrabold text-slate-900 mt-1">{{ order_data.nb_produits }}</div>
+      <div class="text-xs text-cyan-600 mt-1"><i class="fas fa-exclamation-triangle"></i> Rupture ou alerte &le; 7j</div>
+    </div>
+    <div class="card p-4 border-l-4 border-l-indigo-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Total articles à commander</div>
+      <div class="text-2xl font-extrabold text-slate-900 mt-1">{{ order_data.total_articles }}</div>
+      <div class="text-xs text-indigo-600 mt-1"><i class="fas fa-boxes"></i> Calculé selon saisonnalité ML</div>
+    </div>
+    <div class="card p-4 border-l-4 border-l-emerald-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Budget total estimé (Achat)</div>
+      <div class="text-2xl font-extrabold text-emerald-600 mt-1">{{ order_data.total_estime }} <span class="text-sm">FCFA/€</span></div>
+      <div class="text-xs text-emerald-600 mt-1"><i class="fas fa-coins"></i> Prix d'achat unitaire</div>
+    </div>
+  </div>
+
+  <!-- Items Table -->
+  <div class="card overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="font-bold text-slate-800">Détail des Produits Suggérés par l'IA</h3>
+      <span class="text-xs bg-cyan-100 text-cyan-800 font-semibold px-2.5 py-1 rounded-full">
+        Généré le {{ order_data.date_generation|date:"d/m/Y H:i" }}
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
+            <th class="py-3 px-4">Référence</th>
+            <th class="py-3 px-4">Produit</th>
+            <th class="py-3 px-4">Catégorie</th>
+            <th class="py-3 px-4 text-center">Stock Actuel</th>
+            <th class="py-3 px-4 text-center">Seuil Alerte</th>
+            <th class="py-3 px-4 text-center text-cyan-700 font-extrabold">Qté Recommandée</th>
+            <th class="py-3 px-4 text-right">P.U Achat (Est.)</th>
+            <th class="py-3 px-4 text-right">Total Estimé</th>
+            <th class="py-3 px-4">Motif de Commande</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+          {% for item in order_data.items %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-3 px-4 font-mono text-xs text-slate-500">{{ item.reference }}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">{{ item.nom }}</td>
+            <td class="py-3 px-4 text-slate-500">{{ item.categorie }}</td>
+            <td class="py-3 px-4 text-center font-bold {% if item.stock_actuel == 0 %}text-red-600{% else %}text-amber-600{% endif %}">
+              {{ item.stock_actuel }}
+            </td>
+            <td class="py-3 px-4 text-center text-slate-500">{{ item.seuil_alerte }}</td>
+            <td class="py-3 px-4 text-center font-extrabold text-cyan-600 bg-cyan-50/50 rounded-lg">
+              +{{ item.quantite_recommandee }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono">{{ item.prix_achat_unitaire }}</td>
+            <td class="py-3 px-4 text-right font-bold font-mono text-slate-900">{{ item.montant_estime }}</td>
+            <td class="py-3 px-4">
+              <span class="text-xs px-2.5 py-1 rounded-md font-medium bg-amber-100 text-amber-800 flex items-center gap-1.5 w-max">
+                <i class="fas fa-robot"></i> {{ item.raison }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="py-12 text-center text-slate-400">
+              <i class="fas fa-check-circle text-4xl text-emerald-400 mb-2"></i>
+              <p class="font-medium text-slate-600">Tous vos niveaux de stock sont optimaux !</p>
+              <p class="text-xs text-slate-400">Aucune rupture prévue dans les 7 prochains jours.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

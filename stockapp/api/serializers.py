@@ -9,7 +9,7 @@ class ProduitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Produit
-        fields = ['id', 'nom', 'reference', 'stock_actuel', 'seuil_alerte', 'rupture', 'prediction_ml', 'prediction_rupture']
+        fields = ['id', 'nom', 'reference', 'stock_actuel', 'seuil_alerte', 'prix_unitaire', 'prix_achat', 'marge_unitaire', 'rupture', 'prediction_ml', 'prediction_rupture']
 
     def get_rupture(self, obj):
         return obj.rupture
@@ -23,10 +23,12 @@ class ProduitSerializer(serializers.ModelSerializer):
 
 class VenteSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.nom', read_only=True)
+    prix_total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    benefice_total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Vente
-        fields = ['id', 'produit', 'produit_nom', 'quantite', 'date_vente']
+        fields = ['id', 'produit', 'produit_nom', 'quantite', 'prix_unitaire', 'prix_achat', 'prix_total', 'benefice_total', 'date_vente']
 
 
 class ApprovisionnementSerializer(serializers.ModelSerializer):
