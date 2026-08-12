@@ -21,14 +21,6 @@ from stockapp.services.prediction_service import predict_stockout_ml, get_demand
 def generate_purchase_order_data() -> dict:
     """
     Analyse le stock et les prédictions ML pour construire les items du Bon de Commande.
-    
-    Returns:
-        dict: {
-            'date_generation': datetime,
-            'items': list[dict],
-            'total_articles': int,
-            'total_estime': float,
-        }
     """
     produits = Produit.objects.select_related('categorie').all()
     items = []
@@ -36,7 +28,6 @@ def generate_purchase_order_data() -> dict:
     total_articles = 0
 
     for product in produits:
-        # Vérifier si le produit est en alerte ou prédit en rupture <= 7 jours
         stockout_days = predict_stockout_ml(product, days_lookback=30)
 
         doit_commander = False
@@ -53,14 +44,12 @@ def generate_purchase_order_data() -> dict:
             raison = f"IA: Rupture estimée dans {stockout_days} jour(s)"
 
         if doit_commander:
-            # Demande prédite pour 14 jours
             demand_info = get_demand_forecast(product, days_ahead=14, days_lookback=30)
             if isinstance(demand_info, dict) and 'predictions' in demand_info:
                 demande_14j = sum(demand_info['predictions'].values())
             else:
                 demande_14j = product.seuil_alerte * 3
 
-            # Quantité recommandée = Max(Demande 14j + seuil - stock, 10)
             qte_rec = max(int(demande_14j + product.seuil_alerte - product.stock_actuel), 10)
             prix_unit_achat = float(product.prix_achat) if product.prix_achat > 0 else float(product.prix_unitaire * 0.7)
             montant_estime = qte_rec * prix_unit_achat
@@ -99,7 +88,6 @@ def generate_purchase_order_pdf(order_data: dict) -> bytes:
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=30, rightMargin=30, topMargin=35, bottomMargin=35)
     styles = getSampleStyleSheet()
 
-    # Style personnalisé
     title_style = ParagraphStyle(
         'POTitle',
         parent=styles['Heading1'],
@@ -117,12 +105,10 @@ def generate_purchase_order_pdf(order_data: dict) -> bytes:
 
     story = []
 
-    # En-tête du document
     story.append(Paragraph("BON DE COMMANDE FOURNISSEUR — SUGGESTION IA", title_style))
     story.append(Paragraph(f"Généré automatiquement le {order_data['date_generation'].strftime('%d/%m/%Y à %H:%M')}", subtitle_style))
     story.append(Spacer(1, 15))
 
-    # Bloc Résumé
     summary_text = (
         f"<b>Produits à réapprovisionner :</b> {order_data['nb_produits']} | "
         f"<b>Total articles à commander :</b> {order_data['total_articles']} | "
@@ -131,7 +117,6 @@ def generate_purchase_order_pdf(order_data: dict) -> bytes:
     story.append(Paragraph(summary_text, styles['Normal']))
     story.append(Spacer(1, 15))
 
-    # Tableau des produits
     headers = ['Réf', 'Produit', 'Stock', 'Seuil', 'Qté Rec.', 'P.U Achat', 'Total Est.', 'Raison']
     table_data = [headers]
 
@@ -166,7 +151,6 @@ def generate_purchase_order_pdf(order_data: dict) -> bytes:
     story.append(tbl)
     story.append(Spacer(1, 20))
 
-    # Signatures
     sig_data = [
         ['Visa Responsable Stock', 'Visa Fournisseur'],
         ['\n\n__________________________', '\n\n__________________________']
@@ -186,7 +170,6 @@ def generate_purchase_order_pdf(order_data: dict) -> bytes:
 def convert_order_data_to_approvisionnements(order_data: dict, fournisseur_nom: str = "Fournisseur Automatique IA") -> int:
     """
     Convertit la suggestion de bon de commande en véritables enregistrements d'approvisionnements.
-    Le stock des produits est automatiquement crédité via les signals / services.
     """
     created_count = 0
     for item in order_data.get('items', []):

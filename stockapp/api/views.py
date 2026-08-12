@@ -1,8 +1,8 @@
 import csv
 
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -280,7 +280,7 @@ class ProduitViewSet(viewsets.ReadOnlyModelViewSet):
 
         return response
 
-    @action(detail=False, methods=['post'], url_path='import', permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['post'], url_path='import', permission_classes=[IsAuthenticated, IsAdminUser])
     def import_csv(self, request):
         csv_file = request.FILES.get('file') or request.data.get('file')
         if not csv_file:
@@ -392,12 +392,36 @@ class VenteViewSet(viewsets.ModelViewSet):
     queryset = Vente.objects.all().order_by('-date_vente')
     serializer_class = VenteSerializer
 
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({'detail': 'Seuls les administrateurs peuvent créer des ventes.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({'detail': 'Seuls les administrateurs peuvent modifier des ventes.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({'detail': 'Seuls les administrateurs peuvent modifier des ventes.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({'detail': 'Seuls les administrateurs peuvent supprimer des ventes.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
+
 
 class ApprovisionnementViewSet(viewsets.ModelViewSet):
     queryset = Approvisionnement.objects.all().order_by('-date_approvisionnement')
     serializer_class = ApprovisionnementSerializer
 
-    @action(detail=False, methods=['post'], url_path='import', permission_classes=[IsAuthenticated])
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'], url_path='import', permission_classes=[IsAuthenticated, IsAdminUser])
     def import_csv(self, request):
         csv_file = request.FILES.get('file') or request.data.get('file')
         if not csv_file:

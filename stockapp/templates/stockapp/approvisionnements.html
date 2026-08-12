@@ -21,9 +21,7 @@
           <h2 class="text-xl font-semibold text-slate-900">Derniers approvisionnements</h2>
           <p class="text-sm text-slate-500">Suivi des apports en stock par produit et fournisseur.</p>
         </div>
-        <div class="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Les approvisionnements sont consultables ici, mais la gestion se fait uniquement via l'administration Django.
-        </div>
+        <div class="text-sm text-slate-500">Les approvisionnements sont gérés via l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Gérer dans l'admin</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -34,6 +32,7 @@
               <th>Quantité</th>
               <th>Fournisseur</th>
               <th>Date</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -43,10 +42,13 @@
                 <td><span class="rounded-md bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700">+{{ appro.quantite }}</span></td>
                 <td class="text-sm text-slate-600">{{ appro.fournisseur }}</td>
                 <td class="text-sm text-slate-500">{{ appro.date_approvisionnement }}</td>
+                <td class="text-right">
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
+                </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="4" class="px-4 py-6 text-center text-sm text-slate-400">Aucun approvisionnement à afficher.</td>
+                <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">Aucun approvisionnement à afficher.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -55,4 +57,5 @@
     </div>
   </section>
 
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}

@@ -1,232 +1,197 @@
 {% extends 'stockapp/base.html' %}
-{% block title %}Ventes & Registre — Gestion Stock IA{% endblock %}
-{% block page_title %}Cahier & Journal des Ventes{% endblock %}
+{% block title %}Ventes & Marges — Gestion Stock IA{% endblock %}
+{% block page_title %}Ventes & Marges Financières{% endblock %}
 
 {% block content %}
-  <section class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+<div class="space-y-6">
 
-    <!-- ====================== BARRE DE CONTRÔLE ====================== -->
-    <div class="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <!-- Form + Period Selector Bar -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+        <i class="fas fa-cash-register text-cyan-600"></i> Cahier de Ventes & Calcul de Marge
+      </h2>
+      <p class="text-sm text-slate-500 mt-1">
+        Consultez votre chiffre d'affaires, vos bénéfices nets et le registre quotidien des ventes.
+      </p>
+    </div>
 
-      <!-- Filtres Date + Période -->
-      <form method="get" action="{% url 'stockapp:ventes-list' %}" class="flex flex-wrap items-center gap-3" id="filter-form">
-        <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <i class="fas fa-calendar-alt text-cyan-600"></i> Date :
-        </label>
-        <input type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()"
-               class="input-field max-w-[160px] !py-1.5 text-sm font-medium">
+    <!-- Period Tabs & Date Picker -->
+    <div class="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+      {% for code, label in periode_choices %}
+        <a href="?date={{ selected_date }}&periode={{ code }}"
+           class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all {% if periode == code %}bg-cyan-600 text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+      <input type="date" value="{{ selected_date }}" onchange="window.location.href='?periode={{ periode }}&date=' + this.value" class="text-xs border border-slate-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-cyan-500 focus:outline-none ml-2" />
+    </div>
+  </div>
 
-        <!-- Sélecteur de période -->
-        <div class="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
-          {% for p, label in periode_choices %}
-            <a href="?date={{ selected_date }}&periode={{ p }}"
-               class="rounded-md px-3 py-1.5 text-xs font-semibold transition-all
-                      {% if periode == p %}bg-white text-cyan-700 shadow{% else %}text-slate-500 hover:text-slate-800{% endif %}">
-              {{ label }}
-            </a>
-          {% endfor %}
+  <!-- Financial KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="card p-4 border-l-4 border-l-cyan-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Chiffre d'Affaires ({{ label_periode }})</div>
+      <div class="text-2xl font-extrabold text-slate-900 mt-1">{{ chiffre_affaires_periode }} <span class="text-sm">FCFA/€</span></div>
+      <div class="text-xs text-cyan-600 mt-1 font-medium"><i class="fas fa-receipt"></i> {{ nb_transactions_periode }} transaction(s)</div>
+    </div>
+    <div class="card p-4 border-l-4 border-l-emerald-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Bénéfice Net Total ({{ label_periode }})</div>
+      <div class="text-2xl font-extrabold text-emerald-600 mt-1">{{ benefice_net_periode }} <span class="text-sm">FCFA/€</span></div>
+      <div class="text-xs text-emerald-600 mt-1 font-medium"><i class="fas fa-chart-line"></i> Marge calculée automatiquement</div>
+    </div>
+    <div class="card p-4 border-l-4 border-l-indigo-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Volume Vendu (Période)</div>
+      <div class="text-2xl font-extrabold text-slate-900 mt-1">{{ total_articles_periode }} <span class="text-sm">articles</span></div>
+      <div class="text-xs text-indigo-600 mt-1 font-medium"><i class="fas fa-boxes"></i> {{ total_articles_jour }} vendus aujourd'hui</div>
+    </div>
+    <div class="card p-4 border-l-4 border-l-amber-500">
+      <div class="text-xs font-semibold uppercase text-slate-400">Bénéfice Net du Jour</div>
+      <div class="text-2xl font-extrabold text-amber-600 mt-1">{{ benefice_net_jour }} <span class="text-sm">FCFA/€</span></div>
+      <div class="text-xs text-amber-600 mt-1 font-medium"><i class="fas fa-coins"></i> CA Jour: {{ chiffre_affaires_jour }} FCFA/€</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Formulaire d'Enregistrement de Vente -->
+    <div class="card p-6 lg:col-span-1 border border-slate-200">
+      <h3 class="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2">
+        <i class="fas fa-cart-plus text-cyan-600"></i> Enregistrer une Vente
+      </h3>
+
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Produit</label>
+          {{ form.produit }}
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Quantité</label>
+            {{ form.quantite }}
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Prix Unitaire</label>
+            {{ form.prix_unitaire }}
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-full py-2.5 font-bold shadow-md hover:shadow-cyan-500/20">
+          <i class="fas fa-check"></i> Valider la Vente
+        </button>
       </form>
-
-      <div class="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        Les nouvelles ventes et les annulations sont gérées exclusivement depuis l'administration Django.
-      </div>
     </div>
 
-    <!-- ====================== KPIs — JOURNÉE ====================== -->
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <!-- CA Jour -->
-      <div class="card border-l-4 border-l-emerald-500 bg-gradient-to-br from-white to-emerald-50/40">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">CA — Journée</div>
-            <div class="mt-2 text-2xl font-extrabold text-emerald-700">{{ chiffre_affaires_jour }}</div>
-            <div class="text-xs text-slate-400 mt-0.5">FCFA/€</div>
-          </div>
-          <div class="rounded-xl bg-emerald-100 p-3"><i class="fas fa-coins text-emerald-600 text-lg"></i></div>
-        </div>
-      </div>
-
-      <!-- Bénéfice Jour -->
-      <div class="card border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Bénéfice Net — Journée</div>
-            <div class="mt-2 text-2xl font-extrabold text-amber-700">{{ benefice_net_jour }}</div>
-            <div class="text-xs text-slate-400 mt-0.5">FCFA/€</div>
-          </div>
-          <div class="rounded-xl bg-amber-100 p-3"><i class="fas fa-chart-line text-amber-600 text-lg"></i></div>
-        </div>
-      </div>
-
-      <!-- Unités Jour -->
-      <div class="card border-l-4 border-l-cyan-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Articles vendus</div>
-            <div class="mt-2 text-2xl font-bold text-slate-900">{{ total_articles_jour }}</div>
-            <div class="text-xs text-slate-400 mt-0.5">unités</div>
-          </div>
-          <div class="rounded-xl bg-cyan-100 p-3"><i class="fas fa-boxes text-cyan-600 text-lg"></i></div>
-        </div>
-      </div>
-
-      <!-- Transactions Jour -->
-      <div class="card border-l-4 border-l-indigo-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Transactions</div>
-            <div class="mt-2 text-2xl font-bold text-slate-900">{{ nb_transactions_jour }}</div>
-            <div class="text-xs text-slate-400 mt-0.5">saisies enregistrées</div>
-          </div>
-          <div class="rounded-xl bg-indigo-100 p-3"><i class="fas fa-receipt text-indigo-600 text-lg"></i></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====================== BILAN DE LA PÉRIODE ====================== -->
-    {% if periode != 'jour' %}
-    <div class="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5">
-      <div class="mb-4 flex items-center gap-3">
-        <div class="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-bold text-white uppercase tracking-wide">
-          Bilan — {{ label_periode }}
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div class="text-center">
-          <div class="text-xs text-slate-500">Chiffre d'Affaires</div>
-          <div class="text-xl font-extrabold text-emerald-700 mt-1">{{ chiffre_affaires_periode }}</div>
-          <div class="text-xs text-slate-400">FCFA/€</div>
-        </div>
-        <div class="text-center">
-          <div class="text-xs text-slate-500">Bénéfice Net</div>
-          <div class="text-xl font-extrabold text-amber-700 mt-1">{{ benefice_net_periode }}</div>
-          <div class="text-xs text-slate-400">FCFA/€</div>
-        </div>
-        <div class="text-center">
-          <div class="text-xs text-slate-500">Articles vendus</div>
-          <div class="text-xl font-bold text-slate-900 mt-1">{{ total_articles_periode }}</div>
-          <div class="text-xs text-slate-400">unités</div>
-        </div>
-        <div class="text-center">
-          <div class="text-xs text-slate-500">Transactions</div>
-          <div class="text-xl font-bold text-slate-900 mt-1">{{ nb_transactions_periode }}</div>
-          <div class="text-xs text-slate-400">saisies</div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- ====================== CAHIER QUOTIDIEN ====================== -->
-    <div class="card-glow border border-slate-200">
-      <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+    <!-- Registre Synthétique Quotidien (Bilan Jour) -->
+    <div class="card lg:col-span-2 overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
-          <span class="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-            <i class="fas fa-book-open"></i> Registre Synthétique Quotidien
-          </span>
-          <h2 class="mt-2 text-xl font-bold text-slate-900">Journal du {{ selected_date }}</h2>
-          <p class="text-sm text-slate-500 mt-0.5">Synthèse du cahier de caisse : décomposition, prix unitaire, CA et bénéfice par produit.</p>
+          <h3 class="font-bold text-slate-900">Bilan Synthétique Quotidien ({{ selected_date }})</h3>
+          <p class="text-xs text-slate-400">Regroupement des ventes par produit et décomposition des quantités</p>
         </div>
+        <span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
+          Bénéfice: +{{ benefice_net_jour }} FCFA/€
+        </span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="table-modern w-full">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider">
+            <tr class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
               <th class="py-3 px-4">Produit</th>
-              <th class="py-3 px-4">Décomposition (saisies du jour)</th>
-              <th class="py-3 px-4 text-center">Qté Totale</th>
-              <th class="py-3 px-4 text-right">P.U</th>
-              <th class="py-3 px-4 text-right">CA</th>
-              <th class="py-3 px-4 text-right">Bénéfice</th>
+              <th class="py-3 px-4">Décomposition (Ventes du jour)</th>
+              <th class="py-3 px-4 text-center">Total Vendu</th>
+              <th class="py-3 px-4 text-right">P.U Vente</th>
+              <th class="py-3 px-4 text-right">Montant Total</th>
+              <th class="py-3 px-4 text-right text-emerald-600">Bénéfice Net</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody class="divide-y divide-slate-100 text-sm">
             {% for item in journal_ventes %}
-              <tr class="hover:bg-slate-50 transition-colors">
-                <td class="py-3.5 px-4 font-semibold text-slate-900">{{ item.produit_nom }}</td>
-                <td class="py-3.5 px-4">
-                  <span class="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200/60 font-mono font-semibold text-sm">{{ item.decomposition }}</span>
-                </td>
-                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ item.total_quantite }}</td>
-                <td class="py-3.5 px-4 text-right font-medium text-slate-600">{{ item.prix_unitaire }} FCFA/€</td>
-                <td class="py-3.5 px-4 text-right font-extrabold text-emerald-700">{{ item.montant_total }} FCFA/€</td>
-                <td class="py-3.5 px-4 text-right font-semibold text-amber-700">{{ item.benefice }} FCFA/€</td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-400">
-                  <i class="fas fa-receipt text-4xl mb-3 text-slate-300 block"></i>
-                  Aucune vente enregistrée pour le {{ selected_date }}.
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-          {% if journal_ventes %}
-            <tfoot>
-              <tr class="bg-slate-900 text-white font-bold border-t-2 border-slate-900">
-                <td colspan="2" class="py-4 px-4 text-base">TOTAL GÉNÉRAL DU JOUR</td>
-                <td class="py-4 px-4 text-center text-cyan-300">{{ total_articles_jour }}</td>
-                <td class="py-4 px-4 text-right text-sm text-slate-400">—</td>
-                <td class="py-4 px-4 text-right text-xl font-extrabold text-emerald-400">{{ chiffre_affaires_jour }} FCFA/€</td>
-                <td class="py-4 px-4 text-right text-xl font-extrabold text-amber-400">{{ benefice_net_jour }} FCFA/€</td>
-              </tr>
-            </tfoot>
-          {% endif %}
-        </table>
-      </div>
-    </div>
-
-    <!-- ====================== HISTORIQUE DÉTAILLÉ ====================== -->
-    <div class="card-glow mt-2">
-      <div class="mb-4 flex items-center justify-between">
-        <div>
-          <h3 class="text-lg font-semibold text-slate-900">Historique chronologique des transactions</h3>
-          <p class="text-xs text-slate-500 mt-0.5">50 dernières saisies individuelles — cliquez l'icône PDF pour télécharger le reçu.</p>
-        </div>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="table-modern w-full text-sm">
-          <thead>
-            <tr>
-              <th>Produit</th>
-              <th>Qté</th>
-              <th>P.U</th>
-              <th>CA</th>
-              <th>Bénéfice</th>
-              <th>Date / Heure</th>
-              <th class="text-right">Actions</th>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">{{ item.produit_nom }}</td>
+              <td class="py-3 px-4 font-mono text-xs text-cyan-700 bg-cyan-50/60 rounded px-2 py-1 inline-block">
+                {{ item.decomposition }}
+              </td>
+              <td class="py-3 px-4 text-center font-bold text-slate-800">{{ item.total_quantite }}</td>
+              <td class="py-3 px-4 text-right font-mono">{{ item.prix_unitaire }}</td>
+              <td class="py-3 px-4 text-right font-bold font-mono text-slate-900">{{ item.montant_total }}</td>
+              <td class="py-3 px-4 text-right font-extrabold font-mono text-emerald-600">+{{ item.benefice }}</td>
             </tr>
-          </thead>
-          <tbody>
-            {% for vente in ventes %}
-              <tr>
-                <td class="font-medium text-slate-800">{{ vente.produit.nom }}</td>
-                <td><span class="rounded-md bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-700">{{ vente.quantite }}</span></td>
-                <td class="text-slate-600">{{ vente.prix_unitaire }} FCFA/€</td>
-                <td class="font-semibold text-emerald-700">{{ vente.prix_total }} FCFA/€</td>
-                <td class="font-semibold text-amber-700">{{ vente.benefice_total }} FCFA/€</td>
-                <td class="text-xs text-slate-400">{{ vente.date_vente|date:"d/m/Y H:i" }}</td>
-                <td class="text-right">
-                  <div class="inline-flex items-center gap-2">
-                    <!-- Bouton PDF Reçu -->
-                    <a href="{% url 'stockapp:vente-recu-pdf' vente.id %}" target="_blank"
-                       title="Télécharger le reçu PDF" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                      <i class="fas fa-file-pdf text-sm"></i>
-                    </a>
-                  </div>
-                </td>
-              </tr>
             {% empty %}
-              <tr>
-                <td colspan="7" class="px-4 py-6 text-center text-xs text-slate-400">Aucune vente récente enregistrée.</td>
-              </tr>
+            <tr>
+              <td colspan="6" class="py-8 text-center text-slate-400">
+                Aucune vente enregistrée pour le {{ selected_date }}.
+              </td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
 
-  </section>
+  </div>
 
+  <!-- Historique Récent des Ventes Individuelles -->
+  <div class="card overflow-hidden border border-slate-200">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h3 class="font-bold text-slate-900">Historique Détaillé des Transactions</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
+            <th class="py-3 px-4">Réf Vente</th>
+            <th class="py-3 px-4">Produit</th>
+            <th class="py-3 px-4 text-center">Quantité</th>
+            <th class="py-3 px-4 text-right">Prix Unitaire</th>
+            <th class="py-3 px-4 text-right">Prix Total</th>
+            <th class="py-3 px-4 text-right text-emerald-600">Bénéfice</th>
+            <th class="py-3 px-4">Date & Heure</th>
+            <th class="py-3 px-4 text-center">Reçu PDF</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-sm">
+          {% for vente in ventes %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-3 px-4 font-mono text-xs text-slate-400">#{{ vente.pk|stringformat:"06d" }}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">{{ vente.produit.nom }}</td>
+            <td class="py-3 px-4 text-center font-bold text-cyan-600">{{ vente.quantite }}</td>
+            <td class="py-3 px-4 text-right font-mono">{{ vente.prix_unitaire }}</td>
+            <td class="py-3 px-4 text-right font-bold font-mono text-slate-900">{{ vente.prix_total }}</td>
+            <td class="py-3 px-4 text-right font-bold font-mono text-emerald-600">+{{ vente.benefice_total }}</td>
+            <td class="py-3 px-4 text-xs text-slate-500">{{ vente.date_vente|date:"d/m/Y H:i" }}</td>
+            <td class="py-3 px-4 text-center">
+              <a href="{% url 'stockapp:vente-recu-pdf' pk=vente.pk %}" target="_blank" class="btn btn-secondary !py-1 !px-2 text-xs text-red-600 border-red-200 hover:bg-red-50 inline-flex items-center gap-1">
+                <i class="fas fa-file-pdf"></i> Reçu
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="py-8 text-center text-slate-400">Aucune transaction trouvée.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Auto fill product prices in sales form
+  const pricesData = JSON.parse('{{ produits_prices_json|escapejs }}');
+  const produitSelect = document.getElementById('id_vente_produit');
+  const prixInput = document.getElementById('id_vente_prix_unitaire');
+
+  if (produitSelect && prixInput) {
+    produitSelect.addEventListener('change', function() {
+      const selectedId = this.value;
+      if (selectedId && pricesData[selectedId]) {
+        prixInput.value = pricesData[selectedId].prix_unitaire;
+      }
+    });
+  }
+</script>
 {% endblock %}

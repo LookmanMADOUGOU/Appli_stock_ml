@@ -50,6 +50,7 @@
           <p>Vue synthétique des produits critiques et des tendances de consommation.</p>
         </div>
         <div class="table-actions">
+          <a href="{% url 'admin:index' %}" class="btn btn-ghost"><i class="fas fa-cog"></i> Gérer produits (admin)</a>
           <a href="{% url 'stockapp:export-report-pdf' %}" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Exporter PDF</a>
         </div>
       </div>
@@ -147,7 +148,7 @@
           <h2>Catégories</h2>
           <p>Organisation par famille de produits et priorités de réapprovisionnement.</p>
         </div>
-        <a href="{% url 'stockapp:categories-list' %}" class="btn btn-ghost"><i class="fas fa-tags"></i> Voir catégories</a>
+        <a href="{% url 'admin:index' %}" class="btn btn-ghost"><i class="fas fa-tags"></i> Gérer catégories (admin)</a>
       </div>
       <div class="mt-5 grid gap-4 md:grid-cols-3">
         <div class="card">
@@ -190,7 +191,7 @@
           <h2>Approvisionnements</h2>
           <p>Suivi des flux et réapprovisionnements planifiés.</p>
         </div>
-        <a href="{% url 'stockapp:approvisionnements-list' %}" class="btn btn-ghost"><i class="fas fa-truck-loading"></i> Voir approvisionnements</a>
+        <a href="{% url 'admin:index' %}" class="btn btn-ghost"><i class="fas fa-truck-loading"></i> Gérer approvisionnements (admin)</a>
       </div>
       <div class="mt-5 grid gap-4 md:grid-cols-3">
         <div class="card">

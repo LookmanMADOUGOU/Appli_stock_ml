@@ -1,9 +1,8 @@
 # Virtual Environments
-stock/
-stockml/
-venv/
-env/
-.venv/
+/venv/
+/env/
+/.venv/
+/stockml/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

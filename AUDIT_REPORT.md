@@ -13,6 +13,11 @@ Application Django de gestion de stock avec alertes, prévisions et API REST.
 - /api/exports/products/ : export CSV produits
 - /dashboard/export/pdf/ : export PDF stock
 
+## Branches
+
+
+- Remarque : Sur la branche `main`, toutes les opérations CRUD doivent être effectuées via l'administration Django — le dashboard est consultatif. Sur `advanced-features`, certaines fonctionnalités expérimentales peuvent permettre des actions depuis le dashboard.
+
 ## Modèles métiers
 
 ### Categorie
@@ -43,6 +48,7 @@ Application Django de gestion de stock avec alertes, prévisions et API REST.
 - L'API est publique sans authentification
 - `reportlab` est utilisé dans `stockapp/views.py` pour le PDF mais est absent de `requirements.txt`
 - Les prévisions sont calculées à la volée sur le modèle Produit
+- Le projet utilise deux branches principales : `main` pour la version stable et `advanced-features` pour les nouveautés et expérimentations UI/produit.
 
 ## Recommandations
 

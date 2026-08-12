@@ -1,10 +1,6 @@
 """
 Commande Management Django pour envoyer automatiquement le résumé quotidien du Chiffre d'Affaires
 et du Bénéfice Net à l'administrateur / gérant.
-
-Utilisation :
-    python manage.py envoyer_resume_journalier
-    python manage.py envoyer_resume_journalier --date 2026-08-04
 """
 
 from django.core.management.base import BaseCommand

@@ -19,11 +19,9 @@
       <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 class="text-xl font-semibold text-slate-900">Liste des produits</h2>
-          <p class="text-sm text-slate-500">Tous les produits, leurs prix et leur état de stock.</p>
+          <p class="text-sm text-slate-500">Tous les produits et leur état de stock.</p>
         </div>
-        <div class="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          La création, modification et suppression des produits sont gérées uniquement depuis l'administration Django.
-        </div>
+        <div class="text-sm text-slate-500">Les opérations d'ajout/modification/suppression sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -33,10 +31,10 @@
               <th>Nom</th>
               <th>Réf.</th>
               <th>Catégorie</th>
-              <th>Prix Unitaire</th>
               <th>Stock</th>
               <th>Seuil</th>
               <th>Statut</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -45,10 +43,12 @@
                 <td class="font-medium">{{ produit.nom }}</td>
                 <td class="text-sm text-slate-500">{{ produit.reference }}</td>
                 <td>{% if produit.categorie %}<span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ produit.categorie.nom }}</span>{% else %}<span class="text-xs text-slate-400">Aucune</span>{% endif %}</td>
-                <td class="font-semibold text-emerald-700">{{ produit.prix_unitaire }} FCFA/€</td>
                 <td class="font-semibold">{{ produit.stock_actuel }}</td>
                 <td class="text-sm text-slate-500">{{ produit.seuil_alerte }}</td>
                 <td>{% if produit.rupture %}<span class="badge badge-danger">Rupture</span>{% else %}<span class="badge badge-success">OK</span>{% endif %}</td>
+                <td class="text-right">
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
+                </td>
               </tr>
             {% empty %}
               <tr>
@@ -61,4 +61,5 @@
     </div>
   </section>
 
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}

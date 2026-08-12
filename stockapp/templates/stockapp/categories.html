@@ -21,9 +21,7 @@
           <h2 class="text-xl font-semibold text-slate-900">Liste des catégories</h2>
           <p class="text-sm text-slate-500">Des catégories organisées par nombre de produits.</p>
         </div>
-        <div class="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          La création, modification et suppression des catégories se fait uniquement via l'administration Django.
-        </div>
+        <div class="text-sm text-slate-500">Les opérations d'ajout/modification/suppression sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></div>
       </div>
 
       <div class="overflow-x-auto">
@@ -32,6 +30,7 @@
             <tr>
               <th>Nom</th>
               <th>Produits</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -39,10 +38,13 @@
               <tr>
                 <td class="font-medium">{{ categorie.nom }}</td>
                 <td><span class="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-800">{{ categorie.nb_produits }} produits</span></td>
+                <td class="text-right">
+                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
+                </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="2" class="px-4 py-6 text-center text-sm text-slate-400">Aucune catégorie à afficher.</td>
+                <td colspan="3" class="px-4 py-6 text-center text-sm text-slate-400">Aucune catégorie à afficher.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -51,4 +53,5 @@
     </div>
   </section>
 
+  <!-- Forms removed: management is via Django admin -->
 {% endblock %}

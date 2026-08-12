@@ -1,19 +1,24 @@
 import io
 import json
+import os
+from datetime import timedelta
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, F, Count
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.db.models import Sum, F, Count
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from datetime import timedelta
-from .models import AlerteRupture, Approvisionnement, Categorie, Produit, Vente
+
 from .forms import ProduitForm, CategorieForm, VenteForm, ApprovisionnementForm
+from .models import AlerteRupture, Approvisionnement, Categorie, Produit, Vente
 from .services.alert_service import creer_alerte_si_necessaire, resoudre_alerte_si_necessaire, generer_et_envoyer_resume_journalier
 from .services.purchase_order_service import generate_purchase_order_data, generate_purchase_order_pdf, convert_order_data_to_approvisionnements
 
@@ -29,75 +34,51 @@ def dashboard(request):
     alertes_actives = AlerteRupture.objects.filter(est_resolue=False).select_related('produit')[:10]
     alertes_actives_count = alertes_actives.count()
 
-    ventes_recentes = Vente.objects.select_related('produit').order_by('-date_vente')[:10]
-    ventes_30j = Vente.objects.filter(date_vente__gte=timezone.now() - timedelta(days=30)).aggregate(total=Sum('quantite'))['total'] or 0
-    top_consumed = (
+    produits_alertes = Produit.objects.filter(stock_actuel__lte=F('seuil_alerte')).select_related('categorie')[:10]
+
+    top_produits_ventes = (
         Vente.objects
-        .values('produit__nom')
-        .annotate(total=Sum('quantite'))
-        .order_by('-total')[:5]
+        .values('produit__id', 'produit__nom')
+        .annotate(total_ventes=Sum('quantite'))
+        .order_by('-total_ventes')[:5]
     )
 
-    produits_critique = Produit.objects.filter(stock_actuel__lte=F('seuil_alerte')).order_by('stock_actuel')[:10]
-    produits_list = Produit.objects.select_related('categorie').order_by('nom')[:8]
-    categories_count = Categorie.objects.count()
-    top_categories = (
-        Categorie.objects
-        .annotate(total_produits=Count('produits'))
-        .order_by('-total_produits')[:5]
-    )
-    approvisionnements_count = Approvisionnement.objects.count()
-    approvisionnements_recents = Approvisionnement.objects.select_related('produit').order_by('-date_approvisionnement')[:6]
-    avg_products_per_category = round(produits_count / categories_count, 1) if categories_count else 0
-
-    # Prévisions simples
-    previsions = []
-    for p in Produit.objects.all()[:50]:
-        previsions.append({
-            'id': p.id,
-            'nom': p.nom,
-            'prediction_ml': p.prediction_ml,
-            'prediction_rupture': p.prediction_rupture,
-        })
-
-    context = {
-        'produits_count': produits_count,
+    stats = {
+        'total_produits': produits_count,
         'stock_total': stock_total,
-        'produits_en_rupture_count': produits_en_rupture_count,
+        'produits_en_rupture': produits_en_rupture_count,
         'rupture_rate': rupture_rate,
         'alertes_actives_count': alertes_actives_count,
-        'alertes_actives': alertes_actives,
-        'ventes_recentes': ventes_recentes,
-        'top_consumed': top_consumed,
-        'previsions': previsions,
-        'produits_critique': produits_critique,
-        'produits_list': produits_list,
-        'categories_count': categories_count,
-        'top_categories': top_categories,
-        'avg_products_per_category': avg_products_per_category,
-        'approvisionnements_count': approvisionnements_count,
-        'approvisionnements_recents': approvisionnements_recents,
-        'ventes_30j': ventes_30j,
-        'alert_rate': round((alertes_actives_count / produits_count) * 100, 1) if produits_count else 0,
     }
 
-    return render(request, 'stockapp/dashboard.html', context)
+    return render(request, 'stockapp/dashboard.html', {
+        'stats': stats,
+        'alertes_actives': alertes_actives,
+        'produits_alertes': produits_alertes,
+        'top_produits_ventes': top_produits_ventes,
+    })
 
 
 # ==================== PRODUITS ====================
 
 @login_required
 def produits(request):
-    if request.method != 'GET':
-        return redirect('/admin/')
+    query = request.GET.get('q')
+    categorie_id = request.GET.get('categorie')
 
-    produits_qs = Produit.objects.select_related('categorie').order_by('nom')
-    total_produits = produits_qs.count()
-    produits_en_rupture = produits_qs.filter(stock_actuel__lte=F('seuil_alerte')).count()
+    produits_qs = Produit.objects.select_related('categorie').all()
+
+    if query:
+        produits_qs = produits_qs.filter(nom__icontains=query) | produits_qs.filter(reference__icontains=query)
+
+    if categorie_id:
+        produits_qs = produits_qs.filter(categorie_id=categorie_id)
+
+    categories = Categorie.objects.all()
+
     return render(request, 'stockapp/produits.html', {
         'produits': produits_qs,
-        'total_produits': total_produits,
-        'produits_en_rupture': produits_en_rupture,
+        'categories': categories,
     })
 
 
@@ -107,15 +88,15 @@ def produit_ajouter(request):
         form = ProduitForm(request.POST)
         if form.is_valid():
             produit = form.save()
-            if produit.rupture:
-                creer_alerte_si_necessaire(produit)
-            else:
-                resoudre_alerte_si_necessaire(produit)
-            messages.success(request, f"Produit '{produit.nom}' créé avec succès.")
+            creer_alerte_si_necessaire(produit)
+            messages.success(request, f"Produit '{produit.nom}' ajouté avec succès.")
             return redirect('stockapp:produits-list')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
     else:
         form = ProduitForm()
-    return render(request, 'stockapp/produit_form.html', {'form': form, 'title': 'Ajouter un produit'})
+
+    return render(request, 'stockapp/produit_form.html', {'form': form, 'title': 'Ajouter un Produit'})
 
 
 @login_required
@@ -125,15 +106,16 @@ def produit_modifier(request, pk):
         form = ProduitForm(request.POST, instance=produit)
         if form.is_valid():
             produit = form.save()
-            if produit.rupture:
-                creer_alerte_si_necessaire(produit)
-            else:
-                resoudre_alerte_si_necessaire(produit)
+            creer_alerte_si_necessaire(produit)
+            resoudre_alerte_si_necessaire(produit)
             messages.success(request, f"Produit '{produit.nom}' modifié avec succès.")
             return redirect('stockapp:produits-list')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
     else:
         form = ProduitForm(instance=produit)
-    return render(request, 'stockapp/produit_form.html', {'form': form, 'produit': produit, 'title': 'Modifier le produit'})
+
+    return render(request, 'stockapp/produit_form.html', {'form': form, 'title': f"Modifier '{produit.nom}'", 'produit': produit})
 
 
 @login_required
@@ -142,7 +124,7 @@ def produit_supprimer(request, pk):
         produit = get_object_or_404(Produit, pk=pk)
         nom = produit.nom
         produit.delete()
-        messages.success(request, f"Produit '{nom}' supprimé.")
+        messages.success(request, f"Produit '{nom}' supprimé avec succès.")
     return redirect('stockapp:produits-list')
 
 
@@ -150,48 +132,52 @@ def produit_supprimer(request, pk):
 
 @login_required
 def categories(request):
-    if request.method != 'GET':
-        return redirect('/admin/')
+    if request.method == 'POST':
+        form = CategorieForm(request.POST)
+        if form.is_valid():
+            cat = form.save()
+            messages.success(request, f"Catégorie '{cat.nom}' créée.")
+            return redirect('stockapp:categories-list')
+        else:
+            messages.error(request, "Erreur lors de la création de la catégorie.")
+    else:
+        form = CategorieForm()
 
-    categories_qs = Categorie.objects.annotate(nb_produits=Count('produits')).order_by('-nb_produits', 'nom')
-    total_categories = categories_qs.count()
-    total_produits = Produit.objects.count()
+    categories_qs = Categorie.objects.annotate(produits_count=Count('produit')).order_by('nom')
     return render(request, 'stockapp/categories.html', {
         'categories': categories_qs,
-        'total_categories': total_categories,
-        'total_produits': total_produits,
+        'form': form,
     })
 
 
 @login_required
 def categorie_modifier(request, pk):
-    categorie = get_object_or_404(Categorie, pk=pk)
+    cat = get_object_or_404(Categorie, pk=pk)
     if request.method == 'POST':
-        form = CategorieForm(request.POST, instance=categorie)
+        form = CategorieForm(request.POST, instance=cat)
         if form.is_valid():
-            cat = form.save()
-            messages.success(request, f"Catégorie '{cat.nom}' modifiée avec succès.")
+            form.save()
+            messages.success(request, f"Catégorie '{cat.nom}' modifiée.")
             return redirect('stockapp:categories-list')
     else:
-        form = CategorieForm(instance=categorie)
-    return render(request, 'stockapp/categorie_form.html', {'form': form, 'categorie': categorie, 'title': 'Modifier la catégorie'})
+        form = CategorieForm(instance=cat)
+    return render(request, 'stockapp/categorie_form.html', {'form': form, 'categorie': cat})
 
 
 @login_required
 def categorie_supprimer(request, pk):
     if request.method == 'POST':
-        categorie = get_object_or_404(Categorie, pk=pk)
-        nom = categorie.nom
-        categorie.delete()
+        cat = get_object_or_404(Categorie, pk=pk)
+        nom = cat.nom
+        cat.delete()
         messages.success(request, f"Catégorie '{nom}' supprimée.")
     return redirect('stockapp:categories-list')
 
 
-# ==================== VENTES ====================
+# ==================== VENTES & BILAN ====================
 
 @login_required
 def ventes(request):
-    # --- Gestion de la période ---
     periode = request.GET.get('periode', 'jour')
     date_str = request.GET.get('date')
     today = timezone.now().date()
@@ -204,7 +190,6 @@ def ventes(request):
     else:
         selected_date = today
 
-    # Calcul de la plage de dates selon la période
     if periode == 'semaine':
         debut_periode = selected_date - timedelta(days=selected_date.weekday())
         fin_periode = debut_periode + timedelta(days=6)
@@ -220,24 +205,29 @@ def ventes(request):
         debut_periode = selected_date.replace(month=1, day=1)
         fin_periode = selected_date.replace(month=12, day=31)
         label_periode = f"Année {selected_date.year}"
-    else:  # jour (default)
+    else:
         debut_periode = selected_date
         fin_periode = selected_date
         label_periode = f"Journée du {selected_date.strftime('%d/%m/%Y')}"
 
-    if request.method != 'GET':
-        return redirect('/admin/')
+    if request.method == 'POST':
+        form = VenteForm(request.POST)
+        if form.is_valid():
+            vente = form.save()
+            messages.success(request, f"Vente de {vente.quantite}x '{vente.produit.nom}' enregistrée (CA: {vente.prix_total} | Bénéfice: {vente.benefice_total} FCFA/€).")
+            return redirect(f"{reverse('stockapp:ventes-list')}?date={selected_date.strftime('%Y-%m-%d')}&periode={periode}")
+        else:
+            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
+    else:
+        form = VenteForm()
 
-    # Ventes de la période sélectionnée
     ventes_periode = Vente.objects.filter(
         date_vente__date__gte=debut_periode,
         date_vente__date__lte=fin_periode
     ).select_related('produit').order_by('date_vente')
 
-    # Registre du jour (toujours la date sélectionnée)
     ventes_jour = Vente.objects.filter(date_vente__date=selected_date).select_related('produit').order_by('date_vente')
 
-    # Agrégation du journal quotidien par produit
     journal_dict = {}
     chiffre_affaires_jour = 0
     benefice_net_jour = 0
@@ -272,10 +262,14 @@ def ventes(request):
 
     journal_ventes.sort(key=lambda x: x['montant_total'], reverse=True)
 
-    # Statistiques de la période (Semaine/Mois/Année)
     chiffre_affaires_periode = sum(v.prix_total for v in ventes_periode)
     benefice_net_periode = sum(v.benefice_total for v in ventes_periode)
     total_articles_periode = sum(v.quantite for v in ventes_periode)
+
+    produits_data = {
+        p.id: {'prix_unitaire': float(p.prix_unitaire), 'prix_achat': float(p.prix_achat)}
+        for p in Produit.objects.all()
+    }
 
     ventes_recentes = Vente.objects.select_related('produit').order_by('-date_vente')[:50]
 
@@ -293,6 +287,8 @@ def ventes(request):
         'benefice_net_periode': benefice_net_periode,
         'total_articles_periode': total_articles_periode,
         'nb_transactions_periode': ventes_periode.count(),
+        'produits_prices_json': json.dumps(produits_data),
+        'form': form,
         'periode_choices': [
             ('jour', 'Jour'),
             ('semaine', 'Semaine'),
@@ -307,7 +303,7 @@ def vente_supprimer(request, pk):
     if request.method == 'POST':
         vente = get_object_or_404(Vente, pk=pk)
         nom = vente.produit.nom
-        vente.delete()  # Signal pre_delete triggers restore_sale automatically
+        vente.delete()
         messages.success(request, f"Vente de '{nom}' supprimée. Le stock a été réapprovisionné.")
     return redirect('stockapp:ventes-list')
 
@@ -320,7 +316,6 @@ def telecharger_recu_pdf(request, pk):
     styles = getSampleStyleSheet()
     story = []
 
-    # Header
     story.append(Paragraph("LOOK-TECH", styles['Title']))
     story.append(Paragraph("Gestion Stock IA", styles['Normal']))
     story.append(Spacer(1, 8))
@@ -328,11 +323,9 @@ def telecharger_recu_pdf(request, pk):
     story.append(Paragraph(f"Date : {vente.date_vente.strftime('%d/%m/%Y à %H:%M')}", styles['Normal']))
     story.append(Spacer(1, 10))
 
-    # Ligne séparatrice
     story.append(Table([['-' * 35]], colWidths=[200]))
     story.append(Spacer(1, 6))
 
-    # Détail de la vente
     data = [
         ['Produit', vente.produit.nom],
         ['Référence', vente.produit.reference],
@@ -369,14 +362,23 @@ def telecharger_recu_pdf(request, pk):
 
 @login_required
 def approvisionnements(request):
-    if request.method != 'GET':
-        return redirect('/admin/')
+    if request.method == 'POST':
+        form = ApprovisionnementForm(request.POST)
+        if form.is_valid():
+            appro = form.save()
+            messages.success(request, f"Approvisionnement de +{appro.quantite} '{appro.produit.nom}' enregistré.")
+            return redirect('stockapp:approvisionnements-list')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
+    else:
+        form = ApprovisionnementForm()
 
     approvisionnements_qs = Approvisionnement.objects.select_related('produit').order_by('-date_approvisionnement')[:50]
     total_approvisionnements = Approvisionnement.objects.aggregate(total=Sum('quantite'))['total'] or 0
     return render(request, 'stockapp/approvisionnements.html', {
         'approvisionnements': approvisionnements_qs,
         'total_approvisionnements': total_approvisionnements,
+        'form': form,
     })
 
 
@@ -385,7 +387,7 @@ def approvisionnement_supprimer(request, pk):
     if request.method == 'POST':
         appro = get_object_or_404(Approvisionnement, pk=pk)
         nom = appro.produit.nom
-        appro.delete() # Signal pre_delete triggers revert_approvisionnement automatically
+        appro.delete()
         messages.success(request, f"Approvisionnement de '{nom}' annulé. Le stock a été déduit.")
     return redirect('stockapp:approvisionnements-list')
 
@@ -428,6 +430,37 @@ def envoyer_resume_journalier_view(request):
             f"📲 Résumé envoyé à l'administration ! (CA: {res['chiffre_affaires']} | Bénéfice: {res['benefice_net']} FCFA/€)"
         )
     return redirect(request.META.get('HTTP_REFERER', 'stockapp:dashboard'))
+
+
+# ==================== PWA VIEWS ====================
+
+def service_worker(request):
+    sw_path = os.path.join(settings.BASE_DIR, 'stockapp', 'static', 'service-worker.js')
+    if os.path.exists(sw_path):
+        with open(sw_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    else:
+        content = ""
+    response = HttpResponse(content, content_type='application/javascript')
+    response['Service-Worker-Allowed'] = '/'
+    return response
+
+
+def pwa_manifest(request):
+    manifest_path = os.path.join(settings.BASE_DIR, 'stockapp', 'static', 'manifest.json')
+    if os.path.exists(manifest_path):
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    else:
+        content = json.dumps({
+            "name": "Look-Tech Gestion Stock IA",
+            "short_name": "Stock IA",
+            "description": "Application PWA de gestion de stock, prédiction de vente par IA et bilan financier.",
+            "start_url": "/",
+            "display": "standalone"
+        })
+    return HttpResponse(content, content_type='application/manifest+json')
+
 
 
 # ==================== INFOS ET EXPORT ====================
@@ -519,32 +552,3 @@ def export_report_pdf(request):
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="rapport_stock.pdf"'
     return response
-
-
-# ==================== PWA VIEWS ====================
-
-def service_worker(request):
-    import os
-    from django.conf import settings
-    sw_path = os.path.join(settings.BASE_DIR, 'stockapp', 'static', 'service-worker.js')
-    if os.path.exists(sw_path):
-        with open(sw_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-    else:
-        content = ""
-    response = HttpResponse(content, content_type='application/javascript')
-    response['Service-Worker-Allowed'] = '/'
-    return response
-
-
-def pwa_manifest(request):
-    import os
-    from django.conf import settings
-    manifest_path = os.path.join(settings.BASE_DIR, 'stockapp', 'static', 'manifest.json')
-    if os.path.exists(manifest_path):
-        with open(manifest_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-    else:
-        content = "{}"
-    return HttpResponse(content, content_type='application/manifest+json')
-

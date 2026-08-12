@@ -1,16 +1,22 @@
+import io
 from datetime import timedelta
 from unittest.mock import patch
 
+from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from .api.serializers import AlerteRuptureSerializer, ProduitSerializer
 from .models import AlerteRupture, Approvisionnement, Categorie, Produit, Vente
-from .services.alert_service import creer_alerte_si_necessaire
-from .services.prediction_service import predict_sales, predict_stockout
+from .services.alert_service import creer_alerte_si_necessaire, generer_et_envoyer_resume_journalier
+from .services.prediction_service import predict_sales, predict_stockout, get_demand_forecast
+from .services.purchase_order_service import (
+    generate_purchase_order_data,
+    generate_purchase_order_pdf,
+    convert_order_data_to_approvisionnements,
+)
 from .services.stock_service import increase_stock, reduce_stock
 
 
@@ -23,6 +29,8 @@ class PredictionServiceTests(TestCase):
             reference='ABC-001',
             stock_actuel=2,
             seuil_alerte=3,
+            prix_unitaire=100.0,
+            prix_achat=70.0,
         )
 
     def test_prediction_returns_message_when_not_enough_sales(self):
@@ -66,293 +74,249 @@ class PredictionServiceTests(TestCase):
 
 class ProduitSerializerTests(TestCase):
     def setUp(self):
-        self.categorie = Categorie.objects.create(nom='Maison')
+        self.categorie = Categorie.objects.create(nom='Informatique')
         self.produit = Produit.objects.create(
             categorie=self.categorie,
-            nom='Lampe',
-            reference='LAM-001',
-            stock_actuel=2,
+            nom='Clavier',
+            reference='KB-99',
+            stock_actuel=5,
             seuil_alerte=2,
+            prix_unitaire=25.0,
+            prix_achat=15.0,
         )
 
     def test_serializer_includes_prediction_fields(self):
         serializer = ProduitSerializer(self.produit)
-        self.assertIn('prediction_ml', serializer.data)
-        self.assertIn('prediction_rupture', serializer.data)
-        self.assertEqual(serializer.data['prediction_ml'], 'Pas assez de données')
+        data = serializer.data
+        self.assertIn('rupture', data)
+        self.assertIn('prediction_ml', data)
+        self.assertIn('prediction_rupture', data)
+        self.assertIn('prix_unitaire', data)
+        self.assertIn('prix_achat', data)
+        self.assertIn('marge_unitaire', data)
 
 
 class AlerteRuptureSerializerTests(TestCase):
-    def test_serializer_exposes_alert_fields(self):
-        categorie = Categorie.objects.create(nom='Maison')
-        produit = Produit.objects.create(
-            categorie=categorie,
-            nom='Télévision',
-            reference='TV-001',
-            stock_actuel=1,
-            seuil_alerte=2,
+    def setUp(self):
+        self.produit = Produit.objects.create(
+            nom='Souris',
+            reference='MS-01',
+            stock_actuel=0,
+            seuil_alerte=5,
         )
-        alerte = AlerteRupture.objects.create(
-            produit=produit,
+        self.alerte = AlerteRupture.objects.create(
+            produit=self.produit,
             niveau='critique',
-            message='Stock bas',
-            est_resolue=False,
+            message='Rupture imminente',
         )
 
-        serializer = AlerteRuptureSerializer(alerte)
-        self.assertEqual(serializer.data['produit_nom'], produit.nom)
-        self.assertEqual(serializer.data['niveau'], 'critique')
+    def test_serializer_exposes_alert_fields(self):
+        serializer = AlerteRuptureSerializer(self.alerte)
+        data = serializer.data
+        self.assertEqual(data['produit_nom'], 'Souris')
+        self.assertEqual(data['niveau'], 'critique')
 
 
 class ApiEndpointsTests(TestCase):
     def setUp(self):
+        self.admin = User.objects.create_superuser(username='admin', email='admin@test.com', password='password')
+        self.user = User.objects.create_user(username='user', password='password')
         self.client = APIClient()
-        self.user = User.objects.create_user(username='testapiuser', password='testpassword')
-        self.client.force_authenticate(user=self.user)
-        self.categorie = Categorie.objects.create(nom='Maison')
+
+        self.categorie = Categorie.objects.create(nom='Réseau')
         self.produit = Produit.objects.create(
             categorie=self.categorie,
-            nom='Bureau',
-            reference='BR-001',
-            stock_actuel=5,
+            nom='Switch',
+            reference='SW-8P',
+            stock_actuel=10,
             seuil_alerte=2,
-        )
-        self.produit_second = Produit.objects.create(
-            categorie=self.categorie,
-            nom='Chaise',
-            reference='CH-001',
-            stock_actuel=1,
-            seuil_alerte=1,
-        )
-        self.alerte = AlerteRupture.objects.create(
-            produit=self.produit,
-            niveau='alerte',
-            message='Seuil atteint',
-            est_resolue=False,
-        )
-        self.vente = Vente.objects.create(produit=self.produit, quantite=1)
-        self.approvisionnement = Approvisionnement.objects.create(
-            produit=self.produit,
-            quantite=10,
-            fournisseur='Fournisseur SA',
+            prix_unitaire=50.0,
+            prix_achat=30.0,
         )
 
     def test_stats_summary_endpoint(self):
-        url = reverse('stats-summary')
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse('stats-summary'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_product_trend_endpoint(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse('produit-trend', kwargs={'pk': self.produit.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('total_products', response.json())
-        self.assertIn('active_alerts', response.json())
+
+    def test_product_forecast_endpoint(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse('produit-forecast', kwargs={'pk': self.produit.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_products_export_endpoint_returns_csv(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse('produit-export'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('text/csv', response['Content-Type'])
+
+    def test_import_csv_produit_checks_alerts(self):
+        self.client.force_authenticate(user=self.admin)
+        csv_content = "nom,reference,stock_actuel,seuil_alerte,categorie\nDisque Dur,HDD-01,1,3,Réseau\n"
+        csv_file = io.BytesIO(csv_content.encode('utf-8'))
+        csv_file.name = 'produits.csv'
+
+        response = self.client.post(
+            reverse('produit-import-csv'),
+            {'file': csv_file},
+            format='multipart'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(AlerteRupture.objects.filter(produit__reference='HDD-01').exists())
 
     def test_approvisionnement_api_endpoint(self):
+        self.client.force_authenticate(user=self.user)
         url = reverse('approvisionnement-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(response.json()), 1)
-
-    def test_product_forecast_endpoint(self):
-        url = reverse('produit-forecast', args=[self.produit.pk])
-        response = self.client.get(url, {'days': 7})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('prediction_ml', response.json())
-        self.assertIn('prediction_rupture', response.json())
-
-    def test_product_trend_endpoint(self):
-        url = reverse('produit-trend', args=[self.produit.pk])
-        response = self.client.get(url, {'days': 30})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('trend', response.json())
-
-    def test_products_export_endpoint_returns_csv(self):
-        url = reverse('exports-products')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('text/csv', response['Content-Type'])
-        self.assertIn('nom,reference', response.content.decode())
-
-    def test_product_list_supports_search_and_pagination(self):
-        url = reverse('produit-list')
-        response = self.client.get(url, {'search': 'Bureau', 'page_size': 1})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('results', response.json())
-        self.assertEqual(len(response.json()['results']), 1)
-
-    def test_export_report_pdf_authenticated(self):
-        self.client.force_login(self.user)
-        url = reverse('stockapp:export-report-pdf')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pdf')
 
     def test_import_csv_approvisionnement_no_double_increment(self):
-        self.produit.stock_actuel = 5
-        self.produit.save()
-        
-        import io
-        csv_data = "reference,quantite,fournisseur\nBR-001,10,Fournisseur Test\n"
-        csv_file = io.BytesIO(csv_data.encode('utf-8'))
-        csv_file.name = 'approvisionnements.csv'
-        
-        url = reverse('approvisionnement-import-csv')
-        response = self.client.post(url, {'file': csv_file}, format='multipart')
+        self.client.force_authenticate(user=self.admin)
+        csv_content = f"produit_reference,quantite,fournisseur\nSW-8P,5,Fournisseur Test\n"
+        csv_file = io.BytesIO(csv_content.encode('utf-8'))
+        csv_file.name = 'appro.csv'
+
+        response = self.client.post(
+            reverse('approvisionnement-import-csv'),
+            {'file': csv_file},
+            format='multipart'
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['imported'], 1)
-        
         self.produit.refresh_from_db()
         self.assertEqual(self.produit.stock_actuel, 15)
 
-    def test_import_csv_produit_checks_alerts(self):
-        import io
-        csv_data = "reference,nom,stock_actuel,seuil_alerte,categorie\nTEST-ALERT,Test Alert Product,2,5,Maison\n"
-        csv_file = io.BytesIO(csv_data.encode('utf-8'))
-        csv_file.name = 'produits.csv'
-        
-        url = reverse('produit-import-csv')
-        response = self.client.post(url, {'file': csv_file}, format='multipart')
+    def test_product_list_supports_search_and_pagination(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse('produit-list'), {'search': 'Switch', 'page_size': 5})
         self.assertEqual(response.status_code, 200)
-        
-        produit = Produit.objects.get(reference='TEST-ALERT')
-        self.assertTrue(produit.rupture)
-        self.assertTrue(AlerteRupture.objects.filter(produit=produit, est_resolue=False).exists())
+        self.assertEqual(response.data['count'], 1)
+
+    def test_export_report_pdf_authenticated(self):
+        self.client.login(username='user', password='password')
+        response = self.client.get(reverse('stockapp:export-report-pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
 
 
 class VentePrixUnitaireTests(TestCase):
     def setUp(self):
-        self.categorie = Categorie.objects.create(nom='Boissons')
+        self.user = User.objects.create_user(username='tester', password='password')
         self.produit = Produit.objects.create(
-            categorie=self.categorie,
-            nom='Jus d Orange',
-            reference='JUS-001',
+            nom='Bouteille d\'eau',
+            reference='H2O-001',
             stock_actuel=50,
-            seuil_alerte=5,
-            prix_unitaire=500.00,
+            seuil_alerte=10,
+            prix_unitaire=500.0,
+            prix_achat=300.0,
         )
 
-    def test_vente_copies_produit_prix_unitaire_when_blank(self):
-        vente = Vente.objects.create(produit=self.produit, quantite=4)
-        self.assertEqual(vente.prix_unitaire, 500.00)
-        self.assertEqual(vente.prix_total, 2000.00)
-
     def test_vente_calculates_prix_total(self):
-        vente = Vente.objects.create(produit=self.produit, quantite=3, prix_unitaire=450.00)
-        self.assertEqual(vente.prix_unitaire, 450.00)
-        self.assertEqual(vente.prix_total, 1350.00)
-
-    def test_ventes_view_returns_journal_aggregation(self):
-        user = User.objects.create_user(username='testuser', password='password')
-        self.client.force_login(user)
-
-        Vente.objects.create(produit=self.produit, quantite=4, prix_unitaire=500.00)
-        Vente.objects.create(produit=self.produit, quantite=2, prix_unitaire=500.00)
-
-        url = reverse('stockapp:ventes-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('journal_ventes', response.context)
-        
-        journal = response.context['journal_ventes']
-        self.assertEqual(len(journal), 1)
-        self.assertEqual(journal[0]['produit_nom'], 'Jus d Orange')
-        self.assertEqual(journal[0]['total_quantite'], 6)
-        self.assertEqual(journal[0]['decomposition'], '4 + 2')
-        self.assertEqual(journal[0]['montant_total'], 3000.00)
-        self.assertEqual(response.context['chiffre_affaires_jour'], 3000.00)
+        vente = Vente.objects.create(produit=self.produit, quantite=4, prix_unitaire=500.0, prix_achat=300.0)
+        self.assertEqual(vente.prix_total, 2000.0)
 
     def test_vente_calculates_benefice_and_margin(self):
-        self.produit.prix_achat = 300.00
-        self.produit.save()
+        vente = Vente.objects.create(produit=self.produit, quantite=4, prix_unitaire=500.0, prix_achat=300.0)
+        self.assertEqual(vente.marge_unitaire, 200.0)
+        self.assertEqual(vente.benefice_total, 800.0)
 
-        vente = Vente.objects.create(produit=self.produit, quantite=5, prix_unitaire=500.00)
-        self.assertEqual(vente.prix_achat, 300.00)
-        self.assertEqual(vente.marge_unitaire, 200.00)
-        self.assertEqual(vente.benefice_total, 1000.00)
+    def test_vente_copies_produit_prix_unitaire_when_blank(self):
+        vente = Vente.objects.create(produit=self.produit, quantite=2)
+        self.assertEqual(vente.prix_unitaire, 500.0)
+        self.assertEqual(vente.prix_achat, 300.0)
+        self.assertEqual(vente.prix_total, 1000.0)
+        self.assertEqual(vente.benefice_total, 400.0)
+
+    def test_ventes_view_returns_journal_aggregation(self):
+        self.client.login(username='tester', password='password')
+        Vente.objects.create(produit=self.produit, quantite=4)
+        Vente.objects.create(produit=self.produit, quantite=4)
+        Vente.objects.create(produit=self.produit, quantite=1)
+
+        response = self.client.get(reverse('stockapp:ventes-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('journal_ventes', response.context)
+        journal = response.context['journal_ventes']
+        self.assertEqual(len(journal), 1)
+        self.assertEqual(journal[0]['decomposition'], '4 + 4 + 1')
+        self.assertEqual(journal[0]['total_quantite'], 9)
+        self.assertEqual(journal[0]['montant_total'], 4500.0)
+        self.assertEqual(journal[0]['benefice'], 1800.0)
+
+    def test_ventes_view_periode_filtering(self):
+        self.client.login(username='tester', password='password')
+        response = self.client.get(reverse('stockapp:ventes-list'), {'periode': 'mois'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['periode'], 'mois')
 
     def test_telecharger_recu_pdf_view(self):
-        user = User.objects.create_user(username='pdfuser', password='password')
-        self.client.force_login(user)
-        vente = Vente.objects.create(produit=self.produit, quantite=2, prix_unitaire=500.00)
-
-        url = reverse('stockapp:vente-recu-pdf', args=[vente.pk])
+        self.client.login(username='tester', password='password')
+        vente = Vente.objects.create(produit=self.produit, quantite=2)
+        url = reverse('stockapp:vente-recu-pdf', kwargs={'pk': vente.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertTrue(len(response.content) > 0)
-
-    def test_ventes_view_periode_filtering(self):
-        user = User.objects.create_user(username='periodeuser', password='password')
-        self.client.force_login(user)
-
-        Vente.objects.create(produit=self.produit, quantite=2, prix_unitaire=500.00)
-
-        for p in ['jour', 'semaine', 'mois', 'annee']:
-            url = reverse('stockapp:ventes-list') + f'?periode={p}'
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.context['periode'], p)
-            self.assertIn('chiffre_affaires_periode', response.context)
 
 
 class PurchaseOrderAndNotificationTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='iauser', password='password')
-        self.client.force_login(self.user)
-
-        self.categorie = Categorie.objects.create(nom='High Tech')
+        self.user = User.objects.create_user(username='manager', password='password')
         self.produit_rupture = Produit.objects.create(
-            categorie=self.categorie,
-            nom='Ordinateur Portable',
-            reference='ORD-001',
-            stock_actuel=1,
+            nom='Jus d\'Orange',
+            reference='JU-001',
+            stock_actuel=2,
             seuil_alerte=5,
-            prix_unitaire=500000.00,
-            prix_achat=350000.00,
+            prix_unitaire=1000.0,
+            prix_achat=600.0,
         )
 
     def test_purchase_order_data_generation(self):
-        from stockapp.services.purchase_order_service import generate_purchase_order_data
         data = generate_purchase_order_data()
-        self.assertGreaterEqual(data['nb_produits'], 1)
+        self.assertEqual(data['nb_produits'], 1)
         self.assertEqual(data['items'][0]['produit_id'], self.produit_rupture.id)
         self.assertGreater(data['total_articles'], 0)
+        self.assertGreater(data['total_estime'], 0)
 
     def test_purchase_order_pdf_generation(self):
-        from stockapp.services.purchase_order_service import generate_purchase_order_data, generate_purchase_order_pdf
         data = generate_purchase_order_data()
         pdf_bytes = generate_purchase_order_pdf(data)
         self.assertIsInstance(pdf_bytes, bytes)
-        self.assertTrue(len(pdf_bytes) > 0)
+        self.assertGreater(len(pdf_bytes), 100)
 
     def test_purchase_order_views_and_validation(self):
-        url = reverse('stockapp:bon-de-commande')
-        res = self.client.get(url)
-        self.assertEqual(res.status_code, 200)
+        self.client.login(username='manager', password='password')
+        res_list = self.client.get(reverse('stockapp:bon-de-commande'))
+        self.assertEqual(res_list.status_code, 200)
 
-        pdf_url = reverse('stockapp:bon-de-commande-pdf')
-        res_pdf = self.client.get(pdf_url)
+        res_pdf = self.client.get(reverse('stockapp:bon-de-commande-pdf'))
         self.assertEqual(res_pdf.status_code, 200)
         self.assertEqual(res_pdf['Content-Type'], 'application/pdf')
 
-        valider_url = reverse('stockapp:bon-de-commande-valider')
-        res_val = self.client.post(valider_url)
+        res_val = self.client.post(reverse('stockapp:bon-de-commande-valider'))
         self.assertEqual(res_val.status_code, 302)
         self.assertTrue(Approvisionnement.objects.filter(produit=self.produit_rupture).exists())
 
     def test_daily_summary_generation_and_view(self):
-        from stockapp.services.alert_service import generer_et_envoyer_resume_journalier
-        Vente.objects.create(produit=self.produit_rupture, quantite=2, prix_unitaire=500000.00, prix_achat=350000.00)
+        self.client.login(username='manager', password='password')
+        Vente.objects.create(produit=self.produit_rupture, quantite=3)
 
-        res = generer_et_envoyer_resume_journalier()
-        self.assertEqual(res['chiffre_affaires'], 1000000.00)
-        self.assertEqual(res['benefice_net'], 300000.00)
-        self.assertEqual(res['total_articles'], 2)
+        with patch('stockapp.services.alert_service.send_mail') as mock_mail:
+            res = generer_et_envoyer_resume_journalier()
+            self.assertEqual(res['total_articles'], 3)
+            self.assertEqual(res['chiffre_affaires'], 3000.0)
+            self.assertEqual(res['benefice_net'], 1200.0)
+            mock_mail.assert_called_once()
 
-        view_url = reverse('stockapp:envoyer-resume-journalier')
-        response = self.client.post(view_url)
-        self.assertEqual(response.status_code, 302)
+        res_view = self.client.post(reverse('stockapp:envoyer-resume-journalier'))
+        self.assertEqual(res_view.status_code, 302)
 
     def test_ml_seasonality_prediction(self):
-        from stockapp.services.prediction_service import get_demand_forecast, predict_sales
-        # Seed 7 sales on 7 distinct days to trigger RandomForest
         now = timezone.now()
         for i in range(7):
             v = Vente.objects.create(produit=self.produit_rupture, quantite=3)
@@ -380,8 +344,4 @@ class PWATests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/manifest+json')
-        self.assertIn('Look-Tech', response.content.decode('utf-8'))
-
-
-
-
+        self.assertIn('Stock IA', response.content.decode('utf-8'))

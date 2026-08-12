@@ -53,7 +53,6 @@ def envoyer_notification_instantanee_critique(produit: Produit, alerte: AlerteRu
         f"Action conseillée : Veuillez effectuer un réapprovisionnement."
     )
 
-    # 1. Email
     email_sent = False
     try:
         send_mail(subject, body, from_email, [admin_email], fail_silently=True)
@@ -61,7 +60,6 @@ def envoyer_notification_instantanee_critique(produit: Produit, alerte: AlerteRu
     except Exception as e:
         logger.error(f"Erreur envoi email alerte: {e}")
 
-    # 2. Simulation Push / WhatsApp / SMS (Console / Webhook)
     logger.info(f"[NOTIFICATION WHATSAPP/SMS -> {whatsapp_number}] {body}")
 
     return {
@@ -86,7 +84,6 @@ def generer_et_envoyer_resume_journalier(target_date=None) -> dict:
     total_articles = sum(v.quantite for v in ventes_jour)
     nb_transactions = ventes_jour.count()
 
-    # Top Produit du jour
     top_produit_name = "Aucune vente"
     top_qte = 0
     if ventes_jour.exists():

@@ -5,85 +5,10 @@
 {% block content %}
   <section class="mx-auto max-w-3xl py-8">
     <div class="card-glow">
-      <div class="mb-6 flex items-center justify-between border-b pb-4">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-900">{{ title }}</h2>
-          <p class="text-sm text-slate-500">Formulaire d'enregistrement des caractéristiques du produit.</p>
-        </div>
-        <a href="{% url 'stockapp:produits-list' %}" class="btn btn-ghost text-sm">
-          <i class="fas fa-arrow-left"></i> Retour
-        </a>
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-slate-900">Accès formulaire restreint</h2>
+        <p class="text-sm text-slate-500">La création et la modification des produits sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></p>
       </div>
-
-      <form method="post" class="space-y-5">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-          <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-            {{ form.non_field_errors }}
-          </div>
-        {% endif %}
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label for="{{ form.nom.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.nom.label }}</label>
-            {{ form.nom }}
-            {% if form.nom.errors %}
-              <p class="mt-1 text-xs text-rose-600">{{ form.nom.errors.0 }}</p>
-            {% endif %}
-          </div>
-
-          <div>
-            <label for="{{ form.reference.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.reference.label }}</label>
-            {{ form.reference }}
-            {% if form.reference.errors %}
-              <p class="mt-1 text-xs text-rose-600">{{ form.reference.errors.0 }}</p>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label for="{{ form.categorie.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.categorie.label }}</label>
-            {{ form.categorie }}
-            {% if form.categorie.errors %}
-              <p class="mt-1 text-xs text-rose-600">{{ form.categorie.errors.0 }}</p>
-            {% endif %}
-          </div>
-
-          <div>
-            <label for="{{ form.prix_unitaire.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.prix_unitaire.label }}</label>
-            {{ form.prix_unitaire }}
-            {% if form.prix_unitaire.errors %}
-              <p class="mt-1 text-xs text-rose-600">{{ form.prix_unitaire.errors.0 }}</p>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label for="{{ form.stock_actuel.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.stock_actuel.label }}</label>
-            {{ form.stock_actuel }}
-            {% if form.stock_actuel.errors %}
-              <p class="mt-1 text-xs text-rose-600">{{ form.stock_actuel.errors.0 }}</p>
-            {% endif %}
-          </div>
-          <div>
-            <label for="{{ form.seuil_alerte.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ form.seuil_alerte.label }}</label>
-            {{ form.seuil_alerte }}
-            {% if form.seuil_alerte.errors %}
-              <p class="mt-1 text-xs text-rose-600">{{ form.seuil_alerte.errors.0 }}</p>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-3 border-t pt-5">
-          <a href="{% url 'stockapp:produits-list' %}" class="btn btn-ghost">Annuler</a>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> Enregistrer
-          </button>
-        </div>
-      </form>
     </div>
   </section>
 {% endblock %}
