@@ -1,7 +1,7 @@
 {
-  "name": "Look-Tech Gestion Stock IA",
-  "short_name": "Stock IA",
-  "description": "Application PWA de gestion de stock, prédiction de vente par IA et bilan financier.",
+  "name": "SMART-TECH Gestion Commerciale & Stock IA",
+  "short_name": "SMART-TECH",
+  "description": "Application PWA de gestion commerciale, stock, prédictions par IA et bilans financiers.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

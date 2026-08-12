@@ -1,4 +1,4 @@
-# 📘 Gestion de Stock IA — Guide du Projet
+# 📘 SMART-TECH — Application de Gestion Commerciale, Stock & IA
 
 ## Présentation
 

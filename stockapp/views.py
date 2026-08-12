@@ -316,7 +316,7 @@ def telecharger_recu_pdf(request, pk):
     styles = getSampleStyleSheet()
     story = []
 
-    story.append(Paragraph("LOOK-TECH", styles['Title']))
+    story.append(Paragraph("SMART-TECH", styles['Title']))
     story.append(Paragraph("Gestion Stock IA", styles['Normal']))
     story.append(Spacer(1, 8))
     story.append(Paragraph(f"Reçu N° #{vente.pk:06d}", styles['Heading2']))
@@ -453,9 +453,9 @@ def pwa_manifest(request):
             content = f.read()
     else:
         content = json.dumps({
-            "name": "Look-Tech Gestion Stock IA",
-            "short_name": "Stock IA",
-            "description": "Application PWA de gestion de stock, prédiction de vente par IA et bilan financier.",
+            "name": "SMART-TECH Gestion Commerciale & Stock IA",
+            "short_name": "SMART-TECH",
+            "description": "Application PWA de gestion commerciale, stock et prédictions par IA.",
             "start_url": "/",
             "display": "standalone"
         })
