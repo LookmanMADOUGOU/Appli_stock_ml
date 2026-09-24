@@ -1,6 +1,6 @@
 {% extends "stockapp/base.html" %}
 
-{% block title %}Bon de Commande IA Fournisseur — Gestion Stock IA{% endblock %}
+{% block title %}Bon de Commande IA Fournisseur — SMART-TECH{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -19,8 +19,14 @@
       <a href="{% url 'stockapp:bon-de-commande-pdf' %}" target="_blank" class="btn btn-secondary flex items-center gap-2">
         <i class="fas fa-file-pdf text-red-500"></i> Télécharger PDF
       </a>
-      <form action="{% url 'stockapp:bon-de-commande-valider' %}" method="post" onsubmit="return confirm('Voulez-vous transformer ces suggestions en approvisionnements réels et incrémenter le stock ?');">
+      <form action="{% url 'stockapp:bon-de-commande-valider' %}" method="post" class="flex flex-wrap items-center gap-2" onsubmit="return confirm('Voulez-vous transformer ces suggestions en approvisionnements réels et incrémenter le stock ?');">
         {% csrf_token %}
+        <select name="fournisseur_id" class="text-xs rounded-xl border border-gray-200 px-3 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-cyan-500 focus:outline-none shadow-sm">
+          <option value="">-- Assigner à un Fournisseur (Optionnel) --</option>
+          {% for f in fournisseurs %}
+            <option value="{{ f.id }}">{{ f.nom }}</option>
+          {% endfor %}
+        </select>
         <button type="submit" class="btn btn-primary flex items-center gap-2 shadow-lg hover:shadow-cyan-500/20" {% if not order_data.items %}disabled{% endif %}>
           <i class="fas fa-check-circle"></i> Commander & Incrémenter Stock (1-Clic)
         </button>

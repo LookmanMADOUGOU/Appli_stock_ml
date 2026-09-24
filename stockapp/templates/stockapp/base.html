@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Gestion Stock IA{% endblock %}</title>
+  <title>{% block title %}SMART-TECH — Gestion Commerciale Intelligente{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pzw5X2f9+Y0k7Yv5Y2H1zKq1Z1iQe2G5x1Y6m1Y6x1Y6x1Y6x1Y6x1Y6==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -17,7 +17,7 @@
   <meta name="theme-color" content="#0891b2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Stock IA">
+  <meta name="apple-mobile-web-app-title" content="SMART-TECH">
   <link rel="apple-touch-icon" href="/static/stockapp/images/icon-192.jpg">
   <style>body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }</style>
 </head>
@@ -34,7 +34,7 @@
         </div>
         <div>
           <div class="text-sm font-semibold">SMART-TECH</div>
-          <div class="text-xs text-cyan-200">Gestion Stock IA</div>
+          <div class="text-xs text-cyan-200">Gestion commerciale intelligente</div>
         </div>
         <button id="sidebar-toggle" class="ml-auto text-cyan-200 hover:text-white" aria-label="Réduire la sidebar"><i class="fas fa-angle-left"></i></button>
       </div>
@@ -44,14 +44,35 @@
           <i class="fas fa-chart-line w-5 text-cyan-300 group-hover:text-cyan-200"></i>
           <span>Tableau de bord</span>
         </a>
+        <a href="/dashboard/analytics/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-chart-pie w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Analytics 📊</span>
+        </a>
+        <a href="{% url 'stockapp:finances' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-coins w-5 text-emerald-400 group-hover:text-emerald-300"></i>
+          <span>Finances & Trésorerie 💰</span>
+        </a>
+        <a href="/dashboard/previsions-decision/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-brain w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Prévisions IA 🤖</span>
+        </a>
         <a href="/dashboard/produits/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
           <i class="fas fa-boxes w-5 text-cyan-300 group-hover:text-cyan-200"></i>
           <span>Produits</span>
+        </a>
+        <a href="/dashboard/stock/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-warehouse w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Stock & Inventaire</span>
+        </a>
+        <a href="/dashboard/mouvements/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-history w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Historique Mouvements</span>
         </a>
         <a href="/dashboard/categories/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
           <i class="fas fa-tags w-5 text-cyan-300 group-hover:text-cyan-200"></i>
           <span>Catégories</span>
         </a>
+
         <a href="/dashboard/approvisionnements/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
           <i class="fas fa-truck-loading w-5 text-cyan-300 group-hover:text-cyan-200"></i>
           <span>Approvisionnements</span>
@@ -60,9 +81,48 @@
           <i class="fas fa-robot w-5 text-cyan-400"></i>
           <span>Bon de Commande IA</span>
         </a>
+        <a href="/dashboard/caisse/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/60 transition-colors shadow-sm">
+          <i class="fas fa-cash-register w-5 text-emerald-400"></i>
+          <span>Caisse POS ⚡</span>
+        </a>
+        <a href="{% url 'stockapp:clotures-caisse-list' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-file-invoice-dollar w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Clôtures Caisse (Z)</span>
+        </a>
+        <a href="{% url 'stockapp:rapports-hub' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/60 transition-colors">
+          <i class="fas fa-folder-open w-5 text-cyan-400"></i>
+          <span>Rapports & Exports 📑</span>
+        </a>
         <a href="/dashboard/ventes/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-cash-register w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Ventes & Marges</span>
+          <i class="fas fa-receipt w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Journal Ventes</span>
+        </a>
+        <a href="/dashboard/clients/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-users w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Clients</span>
+        </a>
+        <a href="/dashboard/fournisseurs/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+          <i class="fas fa-store w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+          <span>Fournisseurs</span>
+        </a>
+        <a href="{% url 'stockapp:journal-audit' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-indigo-950/40 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-900/60 transition-colors">
+          <i class="fas fa-shield-alt w-5 text-indigo-400"></i>
+          <span>Journal d'Audit 🛡️</span>
+        </a>
+        <a href="{% url 'stockapp:notifications-hub' %}" class="group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium bg-amber-950/30 text-amber-300 border border-amber-500/30 hover:bg-amber-900/50 transition-colors">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-bell w-5 text-amber-400"></i>
+            <span>Centre d'Alertes 🔔</span>
+          </div>
+          {% if unread_notifications_count > 0 %}
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-sm animate-pulse">
+              {{ unread_notifications_count }}
+            </span>
+          {% endif %}
+        </a>
+        <a href="{% url 'stockapp:sauvegardes' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-950/30 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/50 transition-colors">
+          <i class="fas fa-database w-5 text-cyan-400"></i>
+          <span>Sauvegardes & Sécurité 💾</span>
         </a>
         <a href="/info/" class="group mt-6 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
           <i class="fas fa-info-circle w-5 text-cyan-300 group-hover:text-cyan-200"></i>
@@ -106,15 +166,98 @@
             <input type="search" placeholder="Recherche" class="h-9 w-60 rounded-full border border-gray-200 bg-white px-4 pr-10 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
             <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
           </div>
-          <button class="p-2 rounded-full bg-emerald-100 text-emerald-700"><i class="fas fa-bell"></i></button>
-          <div class="flex items-center gap-2">
-            <div class="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">U</div>
-            <div class="hidden sm:block text-sm font-semibold">Utilisateur</div>
+          <!-- Interactive Notification Bell & Dropdown (Phase 12) -->
+          <div class="relative" id="notifications-dropdown-container">
+            <button id="notifications-bell-btn" type="button" class="relative p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm" title="Alertes et notifications">
+              <i class="fas fa-bell text-sm"></i>
+              {% if unread_notifications_count > 0 %}
+                <span id="navbar-notif-badge" class="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white shadow-md border-2 border-white animate-pulse">
+                  {{ unread_notifications_count }}
+                </span>
+              {% endif %}
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="notifications-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-2xl border border-slate-200/90 py-2 z-50">
+              <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-slate-800">Alertes & Notifications</span>
+                  {% if unread_notifications_count > 0 %}
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                      {{ unread_notifications_count }} non lue{{ unread_notifications_count|pluralize }}
+                    </span>
+                  {% endif %}
+                </div>
+                {% if unread_notifications_count > 0 %}
+                  <form action="{% url 'stockapp:notification-tout-lire' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-800 hover:underline">
+                      Tout marquer lu
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+
+              <!-- Notifications List -->
+              <div class="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                {% for notif in recent_notifications %}
+                  <div class="p-3 hover:bg-slate-50 transition-colors flex items-start gap-3 {% if not notif.est_lue %}bg-rose-50/30{% endif %}">
+                    <span class="mt-1 w-2 h-2 rounded-full shrink-0 {% if not notif.est_lue %}bg-rose-500 animate-pulse{% else %}bg-slate-300{% endif %}"></span>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-1">
+                        <p class="text-xs font-bold text-slate-800 truncate">{{ notif.titre }}</p>
+                        <span class="text-[10px] text-slate-400 shrink-0">{{ notif.date_creation|date:"d/m H:i" }}</span>
+                      </div>
+                      <p class="text-[11px] text-slate-600 line-clamp-2 mt-0.5 leading-snug">{{ notif.message }}</p>
+                      <div class="flex items-center justify-between mt-1.5">
+                        {% if notif.lien %}
+                          <a href="{{ notif.lien }}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-800 flex items-center gap-1">
+                            Action <i class="fas fa-chevron-right text-[9px]"></i>
+                          </a>
+                        {% else %}
+                          <span></span>
+                        {% endif %}
+                        {% if not notif.est_lue %}
+                          <form action="{% url 'stockapp:notification-lire' notif.pk %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-[10px] text-slate-400 hover:text-emerald-600 font-medium">
+                              Marquer lu
+                            </button>
+                          </form>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                {% empty %}
+                  <div class="p-6 text-center text-slate-400">
+                    <i class="far fa-bell-slash text-xl mb-1 text-slate-300"></i>
+                    <p class="text-xs font-medium">Aucune alerte récente</p>
+                  </div>
+                {% endfor %}
+              </div>
+
+              <!-- Footer link -->
+              <div class="border-t border-slate-100 p-2 text-center bg-slate-50/60 rounded-b-2xl">
+                <a href="{% url 'stockapp:notifications-hub' %}" class="text-xs font-bold text-slate-700 hover:text-cyan-700 flex items-center justify-center gap-1.5 py-1">
+                  <span>Voir le Centre d'Alertes complet</span>
+                  <i class="fas fa-arrow-right text-[10px]"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <div class="h-9 w-9 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ request.user.username|slice:":2"|upper }}</div>
+            <div class="hidden sm:block text-left">
+              <div class="text-xs font-bold text-slate-800 leading-tight">{{ request.user.username }}</div>
+              <div class="text-[10px] font-semibold text-cyan-600 leading-tight">
+                {% if request.user.is_superuser %}Administrateur{% elif request.user.is_staff %}Manager{% else %}Utilisateur{% endif %}
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      <main id="main-content" class="p-6">
+      <main id="main-content" class="p-4 md:p-6 pb-24 md:pb-6">
         {% if messages %}
           <div class="mb-6 space-y-2">
             {% for message in messages %}
@@ -141,13 +284,53 @@
   </div>
   {% endblock %}
 
+  <!-- Toast d'alerte Hors-Ligne Mobile/Desktop -->
+  <div id="pwa-offline-toast" class="hidden fixed top-4 right-4 z-50 rounded-2xl bg-slate-900/95 backdrop-blur text-amber-300 px-4 py-3 shadow-2xl border border-amber-500/40 flex items-center gap-3 text-xs font-semibold animate-pulse">
+    <i class="fas fa-wifi-slash text-base text-amber-400"></i>
+    <div>
+      <p class="font-bold text-white">Mode Hors-Ligne Actif</p>
+      <p class="text-[11px] text-slate-300">Les données locales en cache restent consultables</p>
+    </div>
+  </div>
+
+  <!-- Barre de Navigation Mobile Inférieure (Bottom Navigation Bar) -->
+  <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-1.5 flex items-center justify-around shadow-2xl">
+    <!-- Dashboard -->
+    <a href="/dashboard/" class="flex flex-col items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-cyan-300 transition-colors py-1">
+      <i class="fas fa-chart-line text-base text-cyan-400"></i>
+      <span>Accueil</span>
+    </a>
+    <!-- Stock -->
+    <a href="/dashboard/stock/" class="flex flex-col items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-cyan-300 transition-colors py-1">
+      <i class="fas fa-boxes text-base text-slate-300"></i>
+      <span>Stock</span>
+    </a>
+    <!-- Caisse POS (Bouton central proéminent) -->
+    <a href="/dashboard/caisse/" class="flex flex-col items-center -mt-5 group" title="Terminal Caisse POS">
+      <div class="h-12 w-12 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center text-lg shadow-lg shadow-emerald-900/50 border-2 border-slate-900 group-active:scale-95 transition-transform">
+        <i class="fas fa-cash-register"></i>
+      </div>
+      <span class="text-[10px] font-bold text-emerald-400 mt-0.5">Caisse ⚡</span>
+    </a>
+    <!-- Prévisions IA -->
+    <a href="/dashboard/previsions-decision/" class="flex flex-col items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-cyan-300 transition-colors py-1">
+      <i class="fas fa-brain text-base text-purple-400"></i>
+      <span>IA 🤖</span>
+    </a>
+    <!-- Journal d'Audit -->
+    <a href="{% url 'stockapp:journal-audit' %}" class="flex flex-col items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-cyan-300 transition-colors py-1">
+      <i class="fas fa-shield-alt text-base text-indigo-400"></i>
+      <span>Audit 🛡️</span>
+    </a>
+  </nav>
+
   <!-- Floating PWA Install Banner for Mobile Browsers -->
-  <div id="pwa-install-banner" class="hidden fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-4 text-white shadow-2xl border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <div id="pwa-install-banner" class="hidden fixed bottom-16 md:bottom-4 left-4 right-4 z-50 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-4 text-white shadow-2xl border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div class="flex items-center gap-3">
-      <img src="/static/stockapp/images/icon-192.jpg" alt="Stock IA" class="h-12 w-12 rounded-xl shadow-md border border-cyan-400/40">
+      <img src="/static/stockapp/images/icon-192.jpg" alt="SMART-TECH" class="h-12 w-12 rounded-xl shadow-md border border-cyan-400/40">
       <div>
-        <div class="font-bold text-sm text-white">Installer l'application Stock IA</div>
-        <div class="text-xs text-cyan-200">Accès rapide sur l'écran d'accueil de votre smartphone 📲</div>
+        <div class="font-bold text-sm text-white">Installer l'application SMART-TECH</div>
+        <div class="text-xs text-cyan-200">Accès rapide sur l'écran d'accueil de votre smartphone ou tablette 📲</div>
       </div>
     </div>
     <div class="flex items-center gap-2 self-end sm:self-auto">
@@ -159,16 +342,37 @@
   </div>
 
   <script>
-    // PWA Service Worker Registration
+    // 1. Enregistrement PWA Service Worker (Phase 10)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/service-worker.js')
-          .then(function(reg) { console.log('PWA ServiceWorker actif (Scope: ' + reg.scope + ')'); })
-          .catch(function(err) { console.log('PWA ServiceWorker erreur:', err); });
+          .then(function(reg) {
+            console.log('[SMART-TECH] Service Worker actif (Scope: ' + reg.scope + ')');
+          })
+          .catch(function(err) {
+            console.warn('[SMART-TECH] Erreur enregistrement Service Worker:', err);
+          });
       });
     }
 
-    // PWA Install Prompt Handler
+    // 2. Détection dynamique de l'état du réseau (Online / Offline)
+    function updateOnlineStatus() {
+      const toast = document.getElementById('pwa-offline-toast');
+      if (!toast) return;
+      if (!navigator.onLine) {
+        toast.classList.remove('hidden');
+      } else {
+        toast.classList.add('hidden');
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    // Vérification initiale
+    if (!navigator.onLine) {
+      updateOnlineStatus();
+    }
+
+    // 3. Prompt d'installation PWA native
     let deferredPrompt;
     const installBanner = document.getElementById('pwa-install-banner');
     const installBtn = document.getElementById('pwa-install-btn');
@@ -185,7 +389,7 @@
         if (deferredPrompt) {
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
-          console.log(`PWA choice: ${outcome}`);
+          console.log(`SMART-TECH PWA install outcome: ${outcome}`);
           deferredPrompt = null;
         }
         if (installBanner) installBanner.classList.add('hidden');
@@ -195,6 +399,24 @@
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
         if (installBanner) installBanner.classList.add('hidden');
+      });
+    }
+
+    // 4. Dropdown Notifications Interactif (Phase 12)
+    const notifBtn = document.getElementById('notifications-bell-btn');
+    const notifMenu = document.getElementById('notifications-dropdown-menu');
+    const notifContainer = document.getElementById('notifications-dropdown-container');
+
+    if (notifBtn && notifMenu) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifMenu.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (notifContainer && !notifContainer.contains(e.target)) {
+          notifMenu.classList.add('hidden');
+        }
       });
     }
   </script>

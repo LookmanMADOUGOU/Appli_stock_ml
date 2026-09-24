@@ -1,0 +1,191 @@
+{% extends 'stockapp/base.html' %}
+
+{% block title %}{{ fournisseur.nom }} — Fiche Fournisseur SMART-TECH{% endblock %}
+{% block page_title %}Détail du Fournisseur & Historique d'Achats{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête / Bouton retour -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center gap-4">
+      <div class="h-14 w-14 rounded-2xl bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-2xl shadow-inner">
+        {{ fournisseur.nom|slice:":1"|upper }}
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-xl font-bold text-gray-900">{{ fournisseur.nom }}</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
+            Partenaire Référencé
+          </span>
+        </div>
+        <p class="text-xs text-gray-500 mt-0.5">Enregistré le {{ fournisseur.date_creation|date:"d/m/Y" }}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'stockapp:fournisseurs-list' %}" class="px-4 py-2 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i> Retour au répertoire
+      </a>
+      <button onclick="document.getElementById('modal-regler-dette').classList.remove('hidden')" class="px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow transition-colors flex items-center gap-2">
+        <i class="fas fa-hand-holding-usd"></i> Régler / Ajuster Dette
+      </button>
+    </div>
+  </div>
+
+  <!-- Cartes Coordonnées & Synthèse Financière -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Coordonnées -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <i class="fas fa-address-card text-cyan-600"></i> Coordonnées de Contact
+      </h3>
+      <div class="space-y-2 text-xs text-gray-600">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-phone text-gray-400 w-4"></i>
+          <span class="font-medium">{{ fournisseur.telephone|default:"Non renseigné" }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-envelope text-gray-400 w-4"></i>
+          <span class="font-medium">{{ fournisseur.email|default:"Non renseigné" }}</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <i class="fas fa-map-marker-alt text-gray-400 w-4 mt-0.5"></i>
+          <span class="font-medium">{{ fournisseur.adresse|default:"Adresse non renseignée" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dépenses totales -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Total Volume d'Achats</h3>
+        <p class="text-2xl font-bold text-gray-900 mt-2">{{ total_depenses|floatformat:2 }} <span class="text-xs font-normal text-gray-500">FCFA</span></p>
+        <p class="text-[11px] text-gray-400 mt-1">{{ total_volume }} unité(s) livrée(s) au total</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+        <i class="fas fa-shopping-cart"></i>
+      </div>
+    </div>
+
+    <!-- Dette / En-cours -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Dette / En-cours Actuel</h3>
+        <p class="text-2xl font-bold {% if fournisseur.dette_fournisseur > 0 %}text-amber-600{% else %}text-emerald-600{% endif %} mt-2">
+          {{ fournisseur.dette_fournisseur|floatformat:2 }} <span class="text-xs font-normal text-gray-500">FCFA</span>
+        </p>
+        <p class="text-[11px] text-gray-400 mt-1">
+          {% if fournisseur.dette_fournisseur > 0 %}Solde restant dû au fournisseur{% else %}Compte fournisseur solder / à jour{% endif %}
+        </p>
+      </div>
+      <div class="w-12 h-12 rounded-xl {% if fournisseur.dette_fournisseur > 0 %}bg-amber-50 text-amber-600{% else %}bg-emerald-50 text-emerald-600{% endif %} flex items-center justify-center text-xl">
+        <i class="fas fa-balance-scale"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique des Livraisons du Fournisseur -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-history text-cyan-600"></i> Historique des Réceptions de ce Fournisseur
+        </h3>
+        <p class="text-xs text-gray-500 mt-0.5">Détail des lots, articles livrés et coûts d'achat unitaires enregistrés.</p>
+      </div>
+      <span class="text-xs font-semibold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+        {{ approvisionnements|length }} approvisionnement(s)
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-gray-600">
+        <thead class="bg-gray-50 text-gray-700 uppercase font-semibold border-b border-gray-100 text-[11px]">
+          <tr>
+            <th class="p-4">Date</th>
+            <th class="p-4">Réf Appro</th>
+            <th class="p-4">Produit Livré</th>
+            <th class="p-4">Quantité</th>
+            <th class="p-4">Coût Unitaire</th>
+            <th class="p-4">Coût Total</th>
+            <th class="p-4">Notes / Réf Facture</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for appro in approvisionnements %}
+          <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="p-4 whitespace-nowrap text-gray-500">
+              {{ appro.date_approvisionnement|date:"d/m/Y à H:i" }}
+            </td>
+            <td class="p-4 font-bold text-gray-900">
+              APPRO-#{{ appro.pk }}
+            </td>
+            <td class="p-4">
+              <span class="font-bold text-gray-900 block">{{ appro.produit.nom }}</span>
+              <span class="text-[10px] text-gray-400 font-mono">Réf: {{ appro.produit.reference }}</span>
+            </td>
+            <td class="p-4">
+              <span class="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                +{{ appro.quantite }}
+              </span>
+            </td>
+            <td class="p-4 font-medium text-gray-700">
+              {{ appro.cout_unitaire|default:appro.produit.prix_achat|floatformat:2 }} FCFA
+            </td>
+            <td class="p-4 font-bold text-gray-900">
+              {{ appro.cout_total|floatformat:2 }} FCFA
+            </td>
+            <td class="p-4 max-w-xs truncate text-gray-500 text-[11px]">
+              {{ appro.notes|default:"—" }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="p-10 text-center text-gray-400">
+              <i class="fas fa-boxes text-3xl mb-2 block text-gray-300"></i>
+              Aucun approvisionnement enregistré pour ce fournisseur pour l'instant.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Règlement Dette Fournisseur -->
+  <div id="modal-regler-dette" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+          <i class="fas fa-hand-holding-usd text-amber-500"></i> Règlement Dette Fournisseur
+        </h3>
+        <button onclick="document.getElementById('modal-regler-dette').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
+        Dette actuelle envers <b>{{ fournisseur.nom }}</b> : <b class="text-sm text-amber-700">{{ fournisseur.dette_fournisseur|floatformat:2 }} FCFA/€</b>.
+      </div>
+
+      <form method="post" action="{% url 'stockapp:fournisseur-regler-dette' fournisseur.pk %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Montant à régler *</label>
+          {{ regler_form.montant }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Mode de règlement *</label>
+          {{ regler_form.moyen_reglement }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Notes / Référence de virement ou reçu</label>
+          {{ regler_form.notes }}
+        </div>
+
+        <div class="pt-3 flex justify-end gap-2 border-t">
+          <button type="button" onclick="document.getElementById('modal-regler-dette').classList.add('hidden')" class="px-4 py-2 text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-xl">Annuler</button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow">Valider le Règlement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

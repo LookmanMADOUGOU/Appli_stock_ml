@@ -1,228 +1,160 @@
-# 📘 SMART-TECH — Application de Gestion Commerciale, Stock & IA
+# 📘 SMART-TECH — Gestion Commerciale Intelligente, Stock & IA
 
-## Présentation
+> **Plateforme d'Entreprise Full-Stack Django : Gestion Commerciale, Pilotage Financier, Intelligence Artificielle Prédictive, Caisse POS Tactile, Clôture Journalière Rapport Z, Alertes Proactives et Sécurité des Données.**
 
-Application Django de gestion de stock qui gère les produits, le stock, les ventes, les approvisionnements, les alertes de rupture et les prévisions.
+---
 
-Le projet propose :
-- un dashboard responsive
-- une API REST complète
-- des prévisions simples basées sur les données de ventes
-- des exports CSV et PDF
+## 🎯 Présentation Globale & Vision
 
-## Installation
+**SMART-TECH** transforme la gestion des commerces, superettes et distributeurs à travers 3 niveaux d'excellence :
 
-1. Activer l'environnement virtuel :
+1. **Niveau 1 — Gestion Opérationnelle** :
+   - Catalogue produits dynamique avec codes-barres, marges et statuts de stock.
+   - Terminal de caisse tactile POS ultra-rapide (multi-articles, remises, calcul de monnaie, crédit client).
+   - Édition instantanée de tickets thermiques (80mm) et de factures commerciales A4 (ReportLab).
+   - Clôture de caisse journalière (Rapport Z officiel PDF) avec réconciliation et contrôle d'écarts.
+   - Gestion intégrée des clients (crédits/créances) et fournisseurs (achats/dettes).
+   - Suivi d'Audit Trail inaltérable pour chaque mouvement de stock.
 
-```powershell
-.\stockml\Scripts\Activate.ps1
+2. **Niveau 2 — Pilotage Financier & Décisionnel** :
+   - Dashboard exécutif temps réel avec comparatifs d'évolution (J vs J-1, S vs S-1, M vs M-1).
+   - Centre financier et compte de résultat d'exploitation (P&L, COGS, charges OPEX, résultat net).
+   - Hub de rapports d'exportation comptables (Inventaire valorisé, ventes réelles, rentabilité CSV/Excel).
+   - Centre de notifications proactives et cloche interactive (détection des ruptures, retards et anomalies).
+
+3. **Niveau 3 — Intelligence Artificielle Prédictive** :
+   - Modèles de Machine Learning Scikit-Learn (Random Forest, Ridge Regression) pour la projection des ventes.
+   - Calcul scientifique du Point de Commande ($ROP$) et du Stock de Sécurité statistique ($SS$).
+   - Détection automatique des capitaux dormants (*Dead Stock* / produits sans rotation).
+   - Simulateur prédictif interactif et génération assistée de bons de commande fournisseurs optimisés.
+
+4. **Niveau 4 — Sécurité & Continuité d'Activité** :
+   - Contrôle d'accès par rôle (Admin, Manager, Caissier, Magasinier).
+   - Journal d'audit complet de toutes les opérations sensibles.
+   - Moteur de sauvegarde SQLite à chaud (archives ZIP, JSON dump, médias, empreinte SHA-256).
+   - Diagnostic d'intégrité SQL direct (`PRAGMA integrity_check`) et snapshots de secours pré-restauration.
+   - PWA mobile installable avec mode hors-ligne résilient.
+
+---
+
+## 🚀 Démarrage en 1 Clic
+
+### Sous Windows
+Double-cliquez simplement sur le script fourni à la racine :
+```cmd
+run_smart_tech.bat
+```
+*Le script configure l'environnement, applique les migrations, initialise les rôles, vérifie l'intégrité de la base et ouvre automatiquement votre navigateur sur `http://127.0.0.1:8000/`.*
+
+### Sous Linux / macOS
+```bash
+chmod +x run_smart_tech.sh
+./run_smart_tech.sh
 ```
 
-2. Installer les dépendances :
+### Avec Docker & Docker Compose
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+L'application démarre immédiatement sur `http://localhost:8000/`.
+
+---
+
+## ⚙️ Installation Manuelle Standard
+
+1. **Activer l'environnement virtuel** :
+   ```powershell
+   # Windows
+   .\.venv\Scripts\Activate.ps1
+   # Linux/macOS
+   source .venv/bin/activate
+   ```
+
+2. **Installer les dépendances** :
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Appliquer les migrations de schéma** :
+   ```bash
+   python manage.py migrate --noinput
+   ```
+
+4. **Initialiser les rôles métier de sécurité** :
+   ```bash
+   python manage.py init_roles
+   ```
+   *(Crée automatiquement les groupes `Admin`, `Manager`, `Caissier`, `Magasinier` avec leurs permissions respectives)*
+
+5. **Créer le compte Administrateur** :
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+6. **Lancer le serveur de développement** :
+   ```bash
+   python manage.py runserver 127.0.0.1:8000
+   ```
+
+---
+
+## 🌐 Cartographie des Modules & URLs
+
+| Module | URL | Rôle Recommandé | Description |
+| :--- | :--- | :--- | :--- |
+| **Accueil & Présentation** | `/` | Tous | Portail de présentation |
+| **Connexion** | `/login/` | Tous | Authentification sécurisée |
+| **Dashboard Exécutif** | `/dashboard/` | Tous | Indicateurs clés, graphiques et KPIs |
+| **Caisse Enregistreuse POS** | `/dashboard/caisse/` | Caissier, Manager, Admin | Terminal de vente tactile rapide |
+| **Clôture de Caisse (Rapport Z)**| `/dashboard/caisse/cloture/` | Caissier, Manager, Admin | Équilibrage tiroir et Rapport Z PDF |
+| **Historique des Clôtures** | `/dashboard/caisse/clotures/` | Manager, Admin | Audit des sessions de caisse |
+| **Catalogue Produits** | `/dashboard/produits/` | Magasinier, Manager, Admin | Fiches articles, prix, marges, codes-barres |
+| **Stock & Inventaire** | `/dashboard/stock/` | Magasinier, Manager, Admin | Alertes et ajustements justifiés |
+| **Mouvements d'Audit Trail** | `/dashboard/mouvements/` | Magasinier, Manager, Admin | Historique de chaque variation de stock |
+| **Journal des Ventes** | `/dashboard/ventes/` | Caissier, Manager, Admin | Tickets, factures A4 ReportLab |
+| **Centre Financier (P&L)** | `/dashboard/finances/` | Manager, Admin | Marges, COGS, charges, résultat net |
+| **Prévisions ML & Décision** | `/dashboard/previsions-decision/`| Manager, Admin | Point de commande ROP, aide aux achats |
+| **Hub d'Export & Rapports** | `/dashboard/rapports/` | Manager, Admin | Exports comptables CSV / Excel |
+| **Centre d'Alertes** | `/dashboard/notifications/` | Tous | Notifications proactives et dédupliquées |
+| **Fiches Clients & Crédits** | `/dashboard/clients/` | Caissier, Manager, Admin | Encaissements et créances |
+| **Fiches Fournisseurs** | `/dashboard/fournisseurs/` | Manager, Admin | Dettes et historiques d'achats |
+| **Approvisionnements** | `/dashboard/approvisionnements/`| Magasinier, Admin | Réceptions et bons de commande |
+| **Journal d'Audit Exécutif** | `/dashboard/securite/audit/` | Admin, Manager | Traçabilité des opérations sensibles |
+| **Sauvegardes & Restauration** | `/dashboard/securite/sauvegardes/`| Admin | Clichés SQLite à chaud & intégrité |
+| **Mode Hors-Ligne PWA** | `/offline/` | Tous | Écran de résilience déconnexion |
+
+---
+
+## 🛠️ Commandes CLI d'Exploitation & Maintenance
+
+| Commande | Syntaxe | Rôle |
+|---|---|---|
+| **Sauvegarde Système** | `python manage.py backup_system [--name <nom>] [--retention <jours>] [--max <quota>]` | Crée une archive ZIP complète (base, dump JSON, médias, SHA256) |
+| **Restauration Système** | `python manage.py restore_system <nom_archive.zip> [--no-input]` | Restaure la base avec snapshot de sécurité préventif |
+| **Diagnostic d'Intégrité** | `python manage.py check_system_integrity` | Analyse physique `PRAGMA integrity_check` et volumes SQL |
+| **Initialisation Rôles** | `python manage.py init_roles` | Configure les 4 groupes RBAC standards |
+
+---
+
+## 📚 Documentation Associée
+
+Pour approfondir l'exploitation de la plateforme :
+- **[Manuel Utilisateur Officiel](MANUEL_UTILISATEUR.md)** : Guide opérationnel détaillé par profil de poste (Caissier, Magasinier, Manager, Administrateur).
+- **[Guide de Déploiement & Production](GUIDE_DEPLOIEMENT.md)** : Instructions pour Docker, Linux Systemd/Nginx, Windows Server et plan de reprise d'activité.
+
+---
+
+## 🧪 Tests Automatisés & Assurance Qualité
+
+Le projet intègre une suite de tests automatisés couvrant 100% des cas d'usage critiques des 14 phases :
 
 ```bash
-pip install -r requirements.txt
-```
-
-3. Appliquer les migrations :
-
-```bash
-python manage.py migrate
-```
-
-4. Créer un super-utilisateur :
-
-```bash
-python manage.py createsuperuser
-```
-
-5. Lancer le serveur :
-
-```bash
-python manage.py runserver
-```
-
-## Branches du projet
-
-- `main` : branche stable. Elle contient la version de base du projet avec le dashboard principal, la gestion des données via l'administration Django et une interface de consultation seule sur le dashboard.
-- `advanced-features` : branche expérimentale. Elle contient les dernières évolutions UI et produit, notamment le support PWA, les bons de commande IA, les enrichissements de dashboard et les prototypes de fonctionnalités avancées.
-
-### Utilisation recommandée
-
-- Sur `main`, effectuez les tests et la gestion de données via l'administration Django. Toutes les opérations de création, modification et suppression (CRUD) doivent être effectuées depuis l'interface d'administration — le dashboard est consultatif.
-- Sur `advanced-features`, testez les nouvelles fonctionnalités sans impacter la version stable. Cette branche peut contenir des prototypes où certaines opérations sont disponibles depuis le dashboard.
-
-### Changer de branche
-
-```bash
-git checkout main
-```
-
-```bash
-git checkout advanced-features
-```
-
-## Branching & workflow
-
-- **Créer une branche locale basée sur `main` :**
-
-```bash
-git checkout -b feature/<nom_de_la_feature> main
-```
-
-- **Pusher la branche distante :**
-
-```bash
-git push -u origin feature/<nom_de_la_feature>
-```
-
-- **Mettre à jour une branche avec les derniers changements de `main` :**
-
-```bash
-git checkout feature/<nom_de_la_feature>
-git fetch origin
-git merge origin/main
-```
-
-- **Fusionner la branche via Pull Request (PR) :**
-
-1. Pusher les commits sur la branche distante.
-2. Créer une PR sur GitHub visant `main`.
-3. Exécuter les tests, demander revue, puis fusionner.
-
-- **Supprimer une branche après fusion :**
-
-```bash
-git branch -d feature/<nom_de_la_feature>
-git push origin --delete feature/<nom_de_la_feature>
-```
-
-- **Conseils pratiques :**
-  - Garder `main` stable et réversible (utiliser PRs et revues).
-  - Travailler sur `advanced-features` pour expérimentations lourdes.
-  - Rebaser localement pour une histoire propre, ou merge si préféré.
-
-## Accès principaux
-
-- Accueil : http://localhost:8000/
-- Dashboard : http://localhost:8000/dashboard/
-- Admin : http://localhost:8000/admin/
-- API : http://localhost:8000/api/
-- Export CSV produits : http://localhost:8000/api/exports/products/
-- Export PDF stock : http://localhost:8000/dashboard/export/pdf/
-
-## Fonctionnalités
-
-- Gestion des catégories, produits, ventes, approvisionnements et alertes
-- Calcul automatique du stock lors des ventes et approvisionnements
-- Alertes de rupture créées et résolues automatiquement
-- Dashboard avec graphiques et informations clés
-- API REST pour intégration externe
-- Prédictions de ventes et de rupture
-
-## Architecture
-
-```
-Appli_stock_predi_vente_rupture/
-├── config/
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── stockapp/
-│   ├── admin.py
-│   ├── api/
-│   ├── models.py
-│   ├── services/
-│   ├── signals.py
-│   ├── templates/stockapp/
-│   └── views.py
-├── manage.py
-├── db.sqlite3
-└── requirements.txt
-```
-
-## Modèles
-
-### Categorie
-- `nom` unique
-
-### Produit
-- `categorie`, `nom`, `reference`, `stock_actuel`, `seuil_alerte`
-- Propriétés :
-  - `rupture`
-  - `prediction_ml`
-  - `prediction_rupture`
-  - `prediction_stockout`
-
-### Vente
-- `produit`, `quantite`, `date_vente`
-
-### Approvisionnement
-- `produit`, `quantite`, `date_approvisionnement`, `fournisseur`
-
-### AlerteRupture
-- `produit`, `niveau`, `message`, `date_creation`, `date_resolution`, `est_resolue`
-
-## API REST
-
-### Produits
-- `GET /api/produits/`
-- `GET /api/produits/{id}/`
-- `GET /api/produits/{id}/prediction/`
-- `GET /api/exports/products/`
-
-### Ventes
-- `GET /api/ventes/`
-- `POST /api/ventes/`
-- `GET /api/ventes/{id}/`
-- `PUT /api/ventes/{id}/`
-- `DELETE /api/ventes/{id}/`
-
-### Approvisionnements
-- `GET /api/approvisionnements/`
-- `POST /api/approvisionnements/`
-- `GET /api/approvisionnements/{id}/`
-- `PUT /api/approvisionnements/{id}/`
-- `DELETE /api/approvisionnements/{id}/`
-
-### Alertes
-- `GET /api/alertes/`
-- `POST /api/alertes/`
-- `GET /api/alertes/{id}/`
-- `PUT /api/alertes/{id}/`
-- `DELETE /api/alertes/{id}/`
-
-### Prédictions et statistiques
-- `GET /api/previsions/`
-- `GET /api/previsions/?produit=1`
-- `GET /api/stats/summary/`
-- `GET /api/stats/category/{category_id}/`
-- `GET /api/stats/trend/?days=30`
-
-### Graphiques
-- `GET /api/charts/sales/?days=30`
-- `GET /api/charts/sales/product/{product_id}/?days=30`
-- `GET /api/charts/consumption/?days=30&limit=10`
-- `GET /api/charts/stock/`
-
-## Tests
-
-```bash
+# Exécution de la suite complète
 python manage.py test
-python manage.py test -v 2
+
+# Exécution ciblée par phase
+python manage.py test stockapp.tests.Phase13BackupAndDataSecurityTests
+python manage.py test stockapp.tests.Phase11ClotureCaisseAndAdvancedReportsTests
+python manage.py test stockapp.tests.Phase12NotificationsAndAlertsTests
 ```
-
-## Dépendances
-
-- Django==6.0.6
-- djangorestframework==3.17.1
-- pandas==3.0.3
-- scikit-learn==1.9.0
-- numpy==2.4.6
-- scipy==1.17.1
-
-## Remarques
-
-- Ajouter `reportlab` dans `requirements.txt` si l'export PDF est utilisé.
-- SQLite convient pour le développement ; PostgreSQL est recommandé en production.
-- La branche `main` est destinée à rester stable. Utilisez `advanced-features` pour tester les nouvelles extensions sans impacter la version principale.

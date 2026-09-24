@@ -1,192 +1,566 @@
 {% extends 'stockapp/base.html' %}
-{% block title %}Accueil - Gestion Stock IA{% endblock %}
+{% block title %}Accueil — SMART-TECH | Boutique & Équipements de Référence{% endblock %}
 {% block page_body %}
-<main class="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.15),_transparent_40%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] text-white">
-  <section id="accueil" class="px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-7xl">
-    <div class="grid gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-      <div class="max-w-2xl">
-        <p class="inline-flex rounded-full bg-cyan-500/10 px-4 py-1 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-200">SaaS B2B pour les équipes</p>
-        <h1 class="mt-8 text-4xl font-bold tracking-tight text-white sm:text-5xl">Transformez votre gestion de stock en avantage concurrentiel.</h1>
-        <p class="mt-6 text-lg leading-8 text-slate-300">Suivez vos inventaires, anticipez les ruptures, et activez des alertes intelligentes dans une seule plateforme moderne qui s’adapte à votre chaîne logistique.</p>
-        <div class="mt-10 flex flex-col gap-4 sm:flex-row">
-          <a href="/dashboard/" class="inline-flex items-center justify-center rounded-full bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400">Découvrir le dashboard</a>
-          <a href="#fonctionnalites" class="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-cyan-400/40 hover:text-cyan-100">Voir les fonctionnalités</a>
-        </div>
-        <div class="mt-12 grid gap-4 sm:grid-cols-3">
-          <div class="rounded-3xl border border-white/10 bg-white/5 p-5 text-center">
-            <p class="text-3xl font-semibold text-white">+24%</p>
-            <p class="mt-2 text-sm text-slate-400">Réduction des ruptures</p>
-          </div>
-          <div class="rounded-3xl border border-white/10 bg-white/5 p-5 text-center">
-            <p class="text-3xl font-semibold text-white">99,8%</p>
-            <p class="mt-2 text-sm text-slate-400">Disponibilité produits</p>
-          </div>
-          <div class="rounded-3xl border border-white/10 bg-white/5 p-5 text-center">
-            <p class="text-3xl font-semibold text-white">Automatisé</p>
-            <p class="mt-2 text-sm text-slate-400">Inventaire & alertes</p>
-          </div>
-        </div>
-      </div>
+<div class="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-cyan-500 selection:text-white">
 
-      <div class="relative isolate overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/60 p-8 shadow-soft">
-        <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-cyan-500/20 to-transparent"></div>
-        <div class="relative grid gap-6 sm:grid-cols-2">
-          <div class="rounded-3xl border border-white/10 bg-slate-950/90 p-6 backdrop-blur-xl">
-            <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Performance</p>
-            <p class="mt-4 text-3xl font-semibold text-white">Tableau de bord</p>
-            <p class="mt-3 text-sm text-slate-400">Indicateurs en temps réel, alertes et tendances pour maîtriser votre stock.</p>
-          </div>
-          <div class="rounded-3xl border border-white/10 bg-slate-950/90 p-6 backdrop-blur-xl">
-            <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Prévisions</p>
-            <p class="mt-4 text-3xl font-semibold text-white">Alimentation intelligente</p>
-            <p class="mt-3 text-sm text-slate-400">Anticipez les ruptures grâce à des prévisions basées sur les ventes et l’approvisionnement.</p>
-          </div>
-          <div class="rounded-3xl border border-white/10 bg-slate-950/90 p-6 backdrop-blur-xl">
-            <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Sécurité</p>
-            <p class="mt-4 text-3xl font-semibold text-white">Contrôle total</p>
-            <p class="mt-3 text-sm text-slate-400">Gestion centralisée des produits, des stocks et des alertes sans rupture.</p>
-          </div>
-          <div class="rounded-3xl border border-white/10 bg-slate-950/90 p-6 backdrop-blur-xl">
-            <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Intégration</p>
-            <p class="mt-4 text-3xl font-semibold text-white">API REST</p>
-            <p class="mt-3 text-sm text-slate-400">Connectez vos tableaux ERP et CRM avec des données produits et ventes en live.</p>
-          </div>
+  <!-- ==================== EN-TÊTE / NAVIGATION DU SITE ==================== -->
+  <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur shadow-sm">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+      
+      <!-- Logo & Nom de la boutique -->
+      <a href="#accueil" class="flex items-center gap-3 group">
+        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 text-white font-bold text-lg shadow-md transition-transform group-hover:scale-105">
+          ST
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="fonctionnalites" class="bg-slate-950 px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-7xl">
-    <div class="grid gap-14 lg:grid-cols-2 lg:items-end">
-      <div>
-        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Fonctionnalités principales</p>
-        <h2 class="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">Une plateforme complète pour vos opérations de stock.</h2>
-        <p class="mt-6 text-lg leading-8 text-slate-400">Des outils pensés pour les directeurs supply chain, les responsables logistique et les équipes commerciales qui veulent agir avant que les ruptures n’impactent leur business.</p>
-      </div>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div class="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-soft">
-          <p class="font-semibold text-white">Alertes anti-rupture</p>
-          <p class="mt-3 text-sm leading-6 text-slate-400">Recevez des notifications dès qu’un produit passe sous le seuil critique.</p>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-soft">
-          <p class="font-semibold text-white">Tableaux de bord</p>
-          <p class="mt-3 text-sm leading-6 text-slate-400">Visualisez vos indicateurs clés, les ventes et l’approvisionnement sur une interface claire.</p>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-soft">
-          <p class="font-semibold text-white">Prévisions produit</p>
-          <p class="mt-3 text-sm leading-6 text-slate-400">Planifiez vos commandes et priorisez vos emplacements de stockage.</p>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-soft">
-          <p class="font-semibold text-white">Exports PDF</p>
-          <p class="mt-3 text-sm leading-6 text-slate-400">Générez des rapports propres pour partager les performances avec vos équipes.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="solutions" class="bg-slate-900 px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-7xl">
-    <div class="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-      <div class="rounded-[2rem] border border-white/10 bg-slate-950/70 p-10 shadow-soft">
-        <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Conçu pour l'usage B2B</p>
-        <h3 class="mt-4 text-3xl font-bold tracking-tight text-white">Ignitez votre logistique collaborative.</h3>
-        <p class="mt-6 text-base leading-7 text-slate-400">Que vous soyez une PME industrielle, un retail multi-sites ou un distributeur, vos équipes auront un tableau de bord puissant pour prendre des décisions rapides et justes.</p>
-        <div class="mt-8 grid gap-4 sm:grid-cols-2">
-          <div class="rounded-3xl bg-slate-900/80 p-5">
-            <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Gain de temps</p>
-            <p class="mt-3 text-white">Processus de contrôle et d’approvisionnement simplifié.</p>
-          </div>
-          <div class="rounded-3xl bg-slate-900/80 p-5">
-            <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Visibilité</p>
-            <p class="mt-3 text-white">Suivi de l’inventaire et des tendances de vente centralisé.</p>
-          </div>
-        </div>
-      </div>
-      <div class="grid gap-6 sm:grid-cols-2">
-        <div class="rounded-[2rem] border border-white/10 bg-slate-950/70 p-8 shadow-soft">
-          <p class="text-sm text-cyan-300">Analyse en temps réel</p>
-          <p class="mt-4 text-lg font-semibold text-white">Décisions basées sur des données fiables.</p>
-          <p class="mt-3 text-sm leading-6 text-slate-400">Graphiques et KPI faciles à partager avec vos équipes.</p>
-        </div>
-        <div class="rounded-[2rem] border border-white/10 bg-slate-950/70 p-8 shadow-soft">
-          <p class="text-sm text-cyan-300">Prévision automatisée</p>
-          <p class="mt-4 text-lg font-semibold text-white">Réduisez les surstocks et gardez vos rayons pleins.</p>
-          <p class="mt-3 text-sm leading-6 text-slate-400">Optimisation du réassortiment avec des alertes ciblées.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="tarifs" class="bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(56,189,248,.12),_transparent_30%),#020617] px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-7xl">
-    <div class="text-center">
-      <p class="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Plans adaptés à chaque organisation</p>
-      <h2 class="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">Un plan simple pour piloter vos stocks.</h2>
-    </div>
-    <div class="mt-12 grid gap-6 xl:grid-cols-3">
-      <div class="rounded-[2rem] border border-white/10 bg-slate-950/80 p-8 shadow-soft">
-        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Starter</p>
-        <p class="mt-6 text-4xl font-bold text-white">Gratuit</p>
-        <p class="mt-4 text-sm leading-6 text-slate-400">Accès au dashboard, suivi des stocks et alertes de base.</p>
-        <ul class="mt-8 space-y-3 text-sm text-slate-300">
-          <li>Tableau de bord produit</li>
-          <li>Suivi des ventes</li>
-          <li>Notifications</li>
-        </ul>
-        <button class="mt-8 w-full rounded-full bg-white/5 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:bg-cyan-500/20">Commencer</button>
-      </div>
-      <div class="rounded-[2rem] border border-cyan-500/20 bg-gradient-to-b from-slate-900/90 to-slate-950/80 p-8 shadow-soft">
-        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Business</p>
-        <p class="mt-6 text-4xl font-bold text-white">Pro</p>
-        <p class="mt-4 text-sm leading-6 text-slate-400">Tableau de bord avancé, prévisions et export PDF.</p>
-        <ul class="mt-8 space-y-3 text-sm text-slate-300">
-          <li>Analyse des tendances</li>
-          <li>Rapports PDF</li>
-          <li>API REST</li>
-        </ul>
-        <button class="mt-8 w-full rounded-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400">Demander une démo</button>
-      </div>
-      <div class="rounded-[2rem] border border-white/10 bg-slate-950/80 p-8 shadow-soft">
-        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Entreprise</p>
-        <p class="mt-6 text-4xl font-bold text-white">Sur mesure</p>
-        <p class="mt-4 text-sm leading-6 text-slate-400">Intégrations ERP, permissions multi-sites et support dédié.</p>
-        <ul class="mt-8 space-y-3 text-sm text-slate-300">
-          <li>Intégration API</li>
-          <li>Administration multi-sites</li>
-          <li>Support prioritaire</li>
-        </ul>
-        <button class="mt-8 w-full rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:border-cyan-400/40">Nous contacter</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="contact" class="bg-slate-950 px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-7xl">
-    <div class="rounded-[2rem] border border-white/10 bg-slate-900/80 p-10 shadow-soft sm:p-14">
-      <div class="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
         <div>
-          <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Prêt à passer à l’étape supérieure ?</p>
-          <h3 class="mt-4 text-3xl font-bold tracking-tight text-white">Gestionnaire de stock moderne pour équipes exigeantes.</h3>
-          <p class="mt-5 text-base leading-7 text-slate-400">Contactez notre équipe pour une démonstration personnalisée et une mise en place rapide.</p>
+          <span class="block text-xl font-bold tracking-tight text-slate-900 group-hover:text-cyan-600 transition-colors">SMART-TECH</span>
+          <span class="block text-xs font-medium text-slate-500">Boutique & Équipements Professionnels</span>
         </div>
-        <div class="space-y-4">
-          <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-6">
-            <p class="text-sm font-semibold text-slate-400">Email</p>
-            <p class="mt-2 text-base text-white">support@smart-tech.io</p>
+      </a>
+
+      <!-- Menu de navigation principal -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#accueil" class="hover:text-cyan-600 transition-colors">Accueil</a>
+        <a href="#rayons" class="hover:text-cyan-600 transition-colors">Nos Rayons</a>
+        <a href="#produits" class="hover:text-cyan-600 transition-colors">Nos Produits</a>
+        <a href="#engagements" class="hover:text-cyan-600 transition-colors">Nos Engagements</a>
+        <a href="#contact" class="hover:text-cyan-600 transition-colors">Horaires & Contact</a>
+      </nav>
+
+      <!-- Actions & Accès Espace Pro / Caisse (Ouvre sur nouvel onglet) -->
+      <div class="flex items-center gap-3">
+        {% if user.is_authenticated %}
+          <a href="/dashboard/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-cyan-500 transition-all">
+            <i class="fas fa-chart-pie"></i>
+            <span>Mon Espace Dashboard</span>
+            <i class="fas fa-external-link-alt text-xs opacity-75"></i>
+          </a>
+        {% else %}
+          <a href="/login/" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-900 transition-all">
+            <i class="fas fa-lock text-cyan-600"></i>
+            <span>Espace Gestion</span>
+            <i class="fas fa-external-link-alt text-xs text-slate-400"></i>
+          </a>
+          <a href="/dashboard/caisse/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-500 transition-all">
+            <i class="fas fa-cash-register"></i>
+            <span>Point de Vente (POS)</span>
+            <i class="fas fa-external-link-alt text-xs opacity-75"></i>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== BANNIÈRE PRINCIPALE / HERO ==================== -->
+  <section id="accueil" class="relative overflow-hidden bg-gradient-to-b from-cyan-50/70 via-white to-slate-50 py-16 sm:py-24 border-b border-slate-200/60">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid items-center gap-12 lg:grid-cols-12">
+        
+        <!-- Texte de présentation de la boutique -->
+        <div class="lg:col-span-7">
+          <div class="inline-flex items-center gap-2 rounded-full bg-cyan-100/80 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-cyan-800 shadow-sm">
+            <span class="h-2 w-2 rounded-full bg-cyan-600 animate-pulse"></span>
+            Magasin Ouvert &bull; Retrait Immédiat en Boutique
           </div>
-          <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-6">
-            <p class="text-sm font-semibold text-slate-400">Téléphone</p>
-            <p class="mt-2 text-base text-white">+33 1 23 45 67 89</p>
+
+          <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl leading-[1.15]">
+            Votre Spécialiste High-Tech, Matériel & Équipements de Qualité
+          </h1>
+
+          <p class="mt-6 text-lg leading-relaxed text-slate-600">
+            Bienvenue chez <strong>SMART-TECH</strong>. Nous proposons aux particuliers et aux entreprises une vaste sélection d'équipements informatiques, accessoires bureautiques, connectique et matériels professionnels au meilleur prix garanti avec un service après-vente dévoué.
+          </p>
+
+          <!-- Boutons d'action (Ouvrent sur nouvel onglet) -->
+          <div class="mt-8 flex flex-wrap items-center gap-4">
+            <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-6 py-3.5 text-base font-semibold text-white shadow-md hover:bg-cyan-500 transition-all">
+              <i class="fas fa-boxes"></i>
+              <span>Consulter le Catalogue</span>
+              <i class="fas fa-arrow-up-right-from-square text-xs opacity-80"></i>
+            </a>
+
+            <a href="/dashboard/caisse/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 text-base font-semibold text-slate-700 shadow-sm hover:border-cyan-600 hover:text-cyan-700 hover:bg-slate-50 transition-all">
+              <i class="fas fa-shopping-cart text-cyan-600"></i>
+              <span>Accéder à la Caisse</span>
+              <i class="fas fa-arrow-up-right-from-square text-xs opacity-60"></i>
+            </a>
           </div>
+
+          <!-- Points de réassurance rapides -->
+          <div class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4 border-t border-slate-200/80 pt-8">
+            <div>
+              <p class="text-2xl font-bold text-slate-900">100%</p>
+              <p class="text-xs font-medium text-slate-500 mt-1">Produits Certifiés & Neufs</p>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-900">&lt; 30 min</p>
+              <p class="text-xs font-medium text-slate-500 mt-1">Retrait au Comptoir</p>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-900">6 j / 7</p>
+              <p class="text-xs font-medium text-slate-500 mt-1">Accueil & Conseil en Magasin</p>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-900">Garantie</p>
+              <p class="text-xs font-medium text-slate-500 mt-1">Service Après-Vente Réactif</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Illustration visuelle de la vitrine / comptoir -->
+        <div class="lg:col-span-5">
+          <div class="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-full bg-rose-400"></span>
+                <span class="h-3 w-3 rounded-full bg-amber-400"></span>
+                <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
+              </div>
+              <span class="text-xs font-bold text-cyan-600 uppercase tracking-wider">SMART-TECH BOUTIQUE</span>
+            </div>
+
+            <!-- Fiche vitrine d'exemple -->
+            <div class="mt-6 space-y-4">
+              <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 text-xl font-bold">
+                    <i class="fas fa-laptop"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900">Ordinateurs & Périphériques</h4>
+                    <p class="text-xs text-slate-500">PC portables, claviers, souris, écrans</p>
+                  </div>
+                </div>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">En stock</span>
+              </div>
+
+              <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-xl font-bold">
+                    <i class="fas fa-network-wired"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900">Réseaux & Télécoms</h4>
+                    <p class="text-xs text-slate-500">Routeurs, câblage, connectique pro</p>
+                  </div>
+                </div>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">En stock</span>
+              </div>
+
+              <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 text-xl font-bold">
+                    <i class="fas fa-print"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900">Bureautique & Consommables</h4>
+                    <p class="text-xs text-slate-500">Toners, papier, accessoires bureau</p>
+                  </div>
+                </div>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">En stock</span>
+              </div>
+            </div>
+
+            <!-- Bandeau comptoir -->
+            <div class="mt-6 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 p-4 text-white flex items-center justify-between">
+              <div>
+                <p class="text-xs text-cyan-300 font-semibold uppercase">Besoin d'un renseignement ?</p>
+                <p class="text-sm font-bold mt-0.5">Appelez-nous au comptoir</p>
+              </div>
+              <a href="tel:+22997001122" target="_blank" rel="noopener noreferrer" class="rounded-xl bg-cyan-500 px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition-colors">
+                <i class="fas fa-phone mr-1"></i> Contacter
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== NOS RAYONS / UNIVERS ==================== -->
+  <section id="rayons" class="py-16 sm:py-24 bg-white border-b border-slate-200/80">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-600">Nos Univers en Magasin</h2>
+        <p class="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">Découvrez nos rayons spécialisés</p>
+        <p class="mt-4 text-base text-slate-600">
+          Chaque rayon propose des articles sélectionnés auprès des plus grandes marques pour leur fiabilité et leur longévité.
+        </p>
+      </div>
+
+      <div class="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Rayon 1 : Informatique -->
+        <div class="group rounded-3xl border border-slate-200 bg-slate-50/60 p-6 transition-all hover:bg-white hover:shadow-lg hover:-translate-y-1">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-600 text-white text-2xl shadow-md transition-transform group-hover:scale-110">
+            <i class="fas fa-desktop"></i>
+          </div>
+          <h3 class="mt-6 text-lg font-bold text-slate-900 group-hover:text-cyan-700 transition-colors">Matériel Informatique</h3>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            Ordinateurs portables, stations de travail, écrans de monitoring, stockage SSD et disques durs externes.
+          </p>
+          <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-cyan-600 group-hover:text-cyan-700">
+            <span>Explorer le rayon</span>
+            <i class="fas fa-chevron-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- Rayon 2 : Périphériques -->
+        <div class="group rounded-3xl border border-slate-200 bg-slate-50/60 p-6 transition-all hover:bg-white hover:shadow-lg hover:-translate-y-1">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white text-2xl shadow-md transition-transform group-hover:scale-110">
+            <i class="fas fa-keyboard"></i>
+          </div>
+          <h3 class="mt-6 text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Périphériques & Accessoires</h3>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            Claviers sans fil, souris optiques précises, casques audio pro, tapis et supports ventilés ergonomiques.
+          </p>
+          <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 group-hover:text-blue-700">
+            <span>Explorer le rayon</span>
+            <i class="fas fa-chevron-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- Rayon 3 : Réseaux & Sécurité -->
+        <div class="group rounded-3xl border border-slate-200 bg-slate-50/60 p-6 transition-all hover:bg-white hover:shadow-lg hover:-translate-y-1">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white text-2xl shadow-md transition-transform group-hover:scale-110">
+            <i class="fas fa-wifi"></i>
+          </div>
+          <h3 class="mt-6 text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">Réseaux & Télécoms</h3>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            Switchs réseau, routeurs Wi-Fi 6 haute portée, câblage RJ45 Cat6/Cat7 et solutions de connexion d'entreprise.
+          </p>
+          <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 group-hover:text-indigo-700">
+            <span>Explorer le rayon</span>
+            <i class="fas fa-chevron-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- Rayon 4 : Bureautique -->
+        <div class="group rounded-3xl border border-slate-200 bg-slate-50/60 p-6 transition-all hover:bg-white hover:shadow-lg hover:-translate-y-1">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white text-2xl shadow-md transition-transform group-hover:scale-110">
+            <i class="fas fa-fax"></i>
+          </div>
+          <h3 class="mt-6 text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Bureautique & Énergie</h3>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            Onduleurs, multiprises parafoudres, imprimantes laser, cartouches et consommables de bureau essentiels.
+          </p>
+          <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 group-hover:text-emerald-700">
+            <span>Explorer le rayon</span>
+            <i class="fas fa-chevron-right text-[10px]"></i>
+          </a>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- ==================== NOS PRODUITS EN RAYON ==================== -->
+  <section id="produits" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-600">Disponibles Actuellement</h2>
+          <p class="mt-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">Nos Articles en Rayon</p>
+          <p class="mt-2 text-sm text-slate-600">Stock physique vérifié et mis à jour en temps réel.</p>
+        </div>
+        <div>
+          <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:border-cyan-600 hover:text-cyan-700 hover:bg-slate-100 transition-all">
+            <span>Voir tout le catalogue</span>
+            <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Grille de produits dynamiques ou par défaut -->
+      <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {% if produits_phares %}
+          {% for p in produits_phares %}
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="rounded-lg bg-cyan-50 px-2.5 py-1 text-[11px] font-bold text-cyan-700 uppercase tracking-wide">
+                    {{ p.categorie.nom|default:"Général" }}
+                  </span>
+                  {% if p.stock_actuel > 0 %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                      <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                      {{ p.stock_actuel }} en stock
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                      <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                      Sur commande
+                    </span>
+                  {% endif %}
+                </div>
+
+                <h3 class="mt-4 text-base font-bold text-slate-900 line-clamp-2">
+                  {{ p.nom }}
+                </h3>
+                <p class="mt-1 text-xs text-slate-400 font-mono">
+                  Réf: {{ p.reference }}
+                </p>
+              </div>
+
+              <div class="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between">
+                <div>
+                  <span class="text-xs text-slate-400 block">Prix unitaire</span>
+                  <span class="text-lg font-extrabold text-slate-900">{{ p.prix_unitaire }} FCFA</span>
+                </div>
+                <a href="/dashboard/caisse/" target="_blank" rel="noopener noreferrer" class="rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-cyan-600 transition-colors" title="Ouvrir la caisse pour encaisser">
+                  <i class="fas fa-cart-plus mr-1"></i> Vendre
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <!-- Éléments par défaut si aucun produit n'est créé -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <span class="rounded-lg bg-cyan-50 px-2.5 py-1 text-[11px] font-bold text-cyan-700 uppercase">Informatique</span>
+              <h3 class="mt-4 text-base font-bold text-slate-900">Souris Ergonomique Pro Sans Fil</h3>
+              <p class="mt-1 text-xs text-slate-400 font-mono">Réf: MOU-PRO-01</p>
+            </div>
+            <div class="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between">
+              <span class="text-lg font-extrabold text-slate-900">12 500 FCFA</span>
+              <span class="text-xs text-emerald-600 font-semibold">Disponible</span>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <span class="rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 uppercase">Périphériques</span>
+              <h3 class="mt-4 text-base font-bold text-slate-900">Clavier Mécanique Rétro-éclairé</h3>
+              <p class="mt-1 text-xs text-slate-400 font-mono">Réf: KEY-MEC-02</p>
+            </div>
+            <div class="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between">
+              <span class="text-lg font-extrabold text-slate-900">35 000 FCFA</span>
+              <span class="text-xs text-emerald-600 font-semibold">Disponible</span>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <span class="rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 uppercase">Réseau</span>
+              <h3 class="mt-4 text-base font-bold text-slate-900">Routeur Wi-Fi 6 Gigabit Double Bande</h3>
+              <p class="mt-1 text-xs text-slate-400 font-mono">Réf: RT-WF6-03</p>
+            </div>
+            <div class="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between">
+              <span class="text-lg font-extrabold text-slate-900">48 000 FCFA</span>
+              <span class="text-xs text-emerald-600 font-semibold">Disponible</span>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <span class="rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 uppercase">Énergie</span>
+              <h3 class="mt-4 text-base font-bold text-slate-900">Onduleur 1000VA Régulé & Parafoudre</h3>
+              <p class="mt-1 text-xs text-slate-400 font-mono">Réf: UPS-1000-04</p>
+            </div>
+            <div class="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between">
+              <span class="text-lg font-extrabold text-slate-900">65 000 FCFA</span>
+              <span class="text-xs text-emerald-600 font-semibold">Disponible</span>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== NOS ENGAGEMENTS & SERVICES ==================== -->
+  <section id="engagements" class="py-16 sm:py-24 bg-white border-b border-slate-200/80">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-600">Confiance & Qualité</h2>
+        <p class="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">Pourquoi choisir SMART-TECH ?</p>
+        <p class="mt-4 text-base text-slate-600">
+          Nous mettons un point d'honneur à offrir une expérience d'achat sécurisée, transparente et durable.
+        </p>
+      </div>
+
+      <div class="mt-14 grid gap-8 md:grid-cols-3">
+        <div class="rounded-3xl border border-slate-200 bg-slate-50/50 p-8 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700 text-2xl">
+            <i class="fas fa-handshake"></i>
+          </div>
+          <h3 class="mt-6 text-xl font-bold text-slate-900">Facturation Officielle & Clarté</h3>
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">
+            Chaque achat donne lieu à un ticket détaillé ou une facture commerciale en bonne et due forme pour votre comptabilité personnelle ou d'entreprise.
+          </p>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-slate-50/50 p-8 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 text-2xl">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3 class="mt-6 text-xl font-bold text-slate-900">Garantie & Service Après-Vente</h3>
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">
+            Tous nos équipements bénéficient de la garantie constructeur. Notre équipe technique en boutique vous assiste pour l'installation et le dépannage.
+          </p>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-slate-50/50 p-8 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 text-2xl">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <h3 class="mt-6 text-xl font-bold text-slate-900">Paiements Simples & Sécurisés</h3>
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">
+            Réglez vos achats en espèces, par carte bancaire, par virement ou via les services de Mobile Money (Wave, Moov, Orange, MTN).
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== BANNIÈRE ESPACE PRO & GESTION ==================== -->
+  <section class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 py-16 text-white border-b border-slate-800">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="rounded-3xl bg-slate-800/60 border border-slate-700 p-8 sm:p-12 shadow-2xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+        <div class="max-w-2xl">
+          <span class="inline-flex items-center gap-2 rounded-lg bg-cyan-500/20 px-3 py-1 text-xs font-bold text-cyan-300 uppercase tracking-widest">
+            <i class="fas fa-users-cog"></i> Portail Équipe & Administration
+          </span>
+          <h3 class="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            Espace Collaborateur & Caisse Enregistreuse
+          </h3>
+          <p class="mt-4 text-base text-slate-300 leading-relaxed">
+            Vous êtes caissier, magasinier ou gestionnaire de la boutique ? Accédez à vos outils de travail : saisie des ventes, encaissements, clôture de caisse quotidienne et inventaire.
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <a href="/dashboard/caisse/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-slate-950 shadow-lg hover:bg-emerald-400 transition-all">
+            <i class="fas fa-cash-register"></i>
+            <span>Terminal POS Caisse</span>
+            <i class="fas fa-external-link-alt text-xs"></i>
+          </a>
+          <a href="/login/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-900/80 px-6 py-3.5 text-sm font-semibold text-white hover:bg-slate-700 transition-all">
+            <i class="fas fa-key"></i>
+            <span>Connexion Gestion</span>
+            <i class="fas fa-external-link-alt text-xs opacity-60"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== HORAIRES, ACCÈS & CONTACT ==================== -->
+  <section id="contact" class="py-16 sm:py-24 bg-slate-100">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-600">Renseignements & Visite</h2>
+        <p class="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">Nous trouver et nous contacter</p>
+        <p class="mt-4 text-base text-slate-600">
+          Notre équipe est à votre disposition pour vous conseiller et vous accueillir en boutique.
+        </p>
+      </div>
+
+      <div class="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        
+        <!-- Adresse physique -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 text-xl">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <h4 class="mt-5 text-base font-bold text-slate-900">Adresse de la Boutique</h4>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            124 Boulevard Commercial<br>
+            Quartier des Affaires &bull; Centre-Ville
+          </p>
+          <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-cyan-600 hover:text-cyan-700">
+            <span>Ouvrir dans Google Maps</span>
+            <i class="fas fa-external-link-alt text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- Horaires d'ouverture -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-xl">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h4 class="mt-5 text-base font-bold text-slate-900">Horaires d'Ouverture</h4>
+          <ul class="mt-2 text-sm text-slate-600 space-y-1">
+            <li><span class="font-semibold text-slate-800">Lun - Ven :</span> 08h00 - 19h00</li>
+            <li><span class="font-semibold text-slate-800">Samedi :</span> 09h00 - 18h00</li>
+            <li class="text-rose-600 font-medium">Dimanche : Fermé</li>
+          </ul>
+        </div>
+
+        <!-- Téléphone & WhatsApp -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 text-xl">
+            <i class="fas fa-phone-alt"></i>
+          </div>
+          <h4 class="mt-5 text-base font-bold text-slate-900">Téléphone & WhatsApp</h4>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            Standard : +229 97 00 11 22<br>
+            Service client : +33 1 23 45 67 89
+          </p>
+          <a href="https://wa.me/22997001122" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700">
+            <i class="fab fa-whatsapp"></i>
+            <span>Discuter sur WhatsApp</span>
+            <i class="fas fa-external-link-alt text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- Email -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 text-xl">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <h4 class="mt-5 text-base font-bold text-slate-900">Courrier Électronique</h4>
+          <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            contact@smart-tech.local<br>
+            commandes@smart-tech.local
+          </p>
+          <a href="mailto:contact@smart-tech.local" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700">
+            <span>Nous écrire par email</span>
+            <i class="fas fa-external-link-alt text-[10px]"></i>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PIED DE PAGE ==================== -->
+  <footer class="bg-slate-950 py-12 text-slate-400 border-t border-slate-900">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-600 text-white font-bold shadow">
+            ST
+          </div>
+          <div>
+            <p class="text-base font-bold text-white">SMART-TECH</p>
+            <p class="text-xs text-slate-400">Boutique & Distribution de Matériel Informatique</p>
+          </div>
+        </div>
+
+        <!-- Liens rapides du footer (Ouvrent sur nouvel onglet) -->
+        <div class="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-slate-300">
+          <a href="/dashboard/produits/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition-colors">
+            Catalogue Produits <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
+          </a>
+          <a href="/dashboard/caisse/" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-400 transition-colors">
+            Caisse Enregistreuse POS <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
+          </a>
+          <a href="/dashboard/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition-colors">
+            Dashboard Gestion <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
+          </a>
+          <a href="/login/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition-colors">
+            Espace Collaborateur <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <p>&copy; 2026 SMART-TECH. Tous droits réservés. Vente au comptoir & distribution professionnelle.</p>
+        <p>Conçu pour une gestion commerciale transparente, moderne et efficace.</p>
+      </div>
+    </div>
+  </footer>
+
+</div>
 {% endblock %}

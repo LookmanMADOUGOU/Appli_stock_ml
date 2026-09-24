@@ -5,6 +5,7 @@ from .views import (
     ApprovisionnementViewSet,
     ProduitViewSet,
     VenteViewSet,
+    MouvementStockViewSet,
     consumption_by_product,
     previsions,
     sales_evolution,
@@ -20,6 +21,7 @@ router.register(r'produits', ProduitViewSet, basename='produit')
 router.register(r'ventes', VenteViewSet, basename='vente')
 router.register(r'approvisionnements', ApprovisionnementViewSet, basename='approvisionnement')
 router.register(r'alertes', AlerteRuptureViewSet, basename='alerte')
+router.register(r'mouvements', MouvementStockViewSet, basename='mouvement-stock')
 
 urlpatterns = [
     path('', include(router.urls)),

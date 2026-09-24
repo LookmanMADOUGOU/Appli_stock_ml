@@ -1,0 +1,318 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Stock & Inventaire — SMART-TECH{% endblock %}
+{% block page_title %}Stock & Inventaire{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 rounded-2xl text-white shadow-xl border border-cyan-500/20">
+    <div>
+      <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+        <i class="fas fa-warehouse text-cyan-400"></i> Gestions du Stock & Inventaire
+      </h2>
+      <p class="text-sm text-cyan-200 mt-1">Supervision en temps réel des niveaux de stock, valeur globale, alertes de rupture et traçabilité.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="document.getElementById('modal-ajustement').classList.remove('hidden')" class="btn bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2 shadow-lg transition-all">
+        <i class="fas fa-sliders-h"></i> Ajustement d'Inventaire
+      </button>
+      <a href="{% url 'stockapp:produit-ajouter' %}" class="btn bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2 shadow-lg transition-all">
+        <i class="fas fa-plus"></i> Nouveau Produit
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Cards (Top Metrics) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    
+    <!-- Total Produits -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Produits</div>
+        <div class="text-2xl font-extrabold text-slate-800 mt-1">{{ total_produits }}</div>
+        <div class="text-xs text-slate-500 mt-1">Références enregistrées</div>
+      </div>
+      <div class="h-12 w-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl shadow-inner">
+        <i class="fas fa-boxes"></i>
+      </div>
+    </div>
+
+    <!-- Alertes Stock Faible -->
+    <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wider text-amber-600">Stock Faible</div>
+        <div class="text-2xl font-extrabold text-amber-700 mt-1">{{ stock_faible_count }}</div>
+        <div class="text-xs text-amber-600/80 mt-1">Seuil d'alerte franchi</div>
+      </div>
+      <div class="h-12 w-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+    </div>
+
+    <!-- Ruptures Totales -->
+    <div class="bg-white rounded-2xl p-5 border border-rose-200 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wider text-rose-600">Ruptures</div>
+        <div class="text-2xl font-extrabold text-rose-700 mt-1">{{ ruptures_count }}</div>
+        <div class="text-xs text-rose-600/80 mt-1">Stock épuisé (0 unité)</div>
+      </div>
+      <div class="h-12 w-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl shadow-inner">
+        <i class="fas fa-times-circle"></i>
+      </div>
+    </div>
+
+    <!-- Valeur du Stock -->
+    <div class="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Valeur du Stock</div>
+        <div class="text-xl font-extrabold text-emerald-700 mt-1">{{ valeur_stock_achat|floatformat:2 }} <span class="text-xs font-normal">FCFA/€</span></div>
+        <div class="text-xs text-emerald-600 mt-1">Vente estimée : {{ valeur_stock_vente|floatformat:2 }} FCFA/€</div>
+      </div>
+      <div class="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+        <i class="fas fa-coins"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Filters & Search Bar -->
+  <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <!-- Search Input -->
+      <div class="relative md:col-span-2">
+        <input type="text" name="q" value="{{ selected_query }}" placeholder="Recherche par nom, référence, SKU ou code-barres..." class="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+      </div>
+
+      <!-- Catégorie Filter -->
+      <div>
+        <select name="categorie" onchange="this.form.submit()" class="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          <option value="">Toutes les catégories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_categorie == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Statut Filter -->
+      <div>
+        <select name="statut" onchange="this.form.submit()" class="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          <option value="">Tous les états de stock</option>
+          <option value="RUPTURE" {% if selected_statut == 'RUPTURE' %}selected{% endif %}>🚨 Rupture de stock</option>
+          <option value="FAIBLE" {% if selected_statut == 'FAIBLE' %}selected{% endif %}>⚠️ Stock faible</option>
+          <option value="NORMAL" {% if selected_statut == 'NORMAL' %}selected{% endif %}>✅ Stock normal</option>
+          <option value="SURSTOCK" {% if selected_statut == 'SURSTOCK' %}selected{% endif %}>📦 Surstock</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Main Section: Products Table & Side Widgets -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Products Inventory Table (2/3 Width) -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i class="fas fa-boxes text-cyan-600"></i> Inventaire des Produits
+        </h3>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-800">{{ produits.count }} résultats</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-100/70 text-slate-600 font-semibold border-b border-slate-200">
+              <th class="py-3 px-4">Produit</th>
+              <th class="py-3 px-4 text-center">Stock disponible</th>
+              <th class="py-3 px-4">Prix Unitaire</th>
+              <th class="py-3 px-4">Marge</th>
+              <th class="py-3 px-4 text-center">Statut</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for p in produits %}
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <!-- Produit info -->
+                <td class="py-3.5 px-4">
+                  <div class="font-semibold text-slate-900">{{ p.nom }}</div>
+                  <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                    <span class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Réf: {{ p.reference }}</span>
+                    {% if p.categorie %}
+                      <span class="text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full border border-cyan-200">{{ p.categorie.nom }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+
+                <!-- Stock dispo -->
+                <td class="py-3.5 px-4 text-center">
+                  <span class="text-base font-extrabold {% if p.stock_actuel == 0 %}text-rose-600{% elif p.stock_actuel <= p.seuil_alerte %}text-amber-600{% else %}text-slate-800{% endif %}">
+                    {{ p.stock_actuel }}
+                  </span>
+                  <span class="text-xs text-slate-400">/ {{ p.stock_maximum }} {{ p.unite }}s</span>
+                  <div class="w-24 bg-slate-200 h-1.5 rounded-full mx-auto mt-1 overflow-hidden">
+                    <div class="h-full {% if p.stock_actuel == 0 %}bg-rose-500{% elif p.stock_actuel <= p.seuil_alerte %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {% if p.stock_maximum > 0 %}{% widthratio p.stock_actuel p.stock_maximum 100 %}{% else %}0{% endif %}%"></div>
+                  </div>
+                </td>
+
+                <!-- Prix unitaire -->
+                <td class="py-3.5 px-4">
+                  <div class="font-semibold text-slate-800">{{ p.prix_unitaire }} FCFA/€</div>
+                  <div class="text-xs text-slate-400">Coût: {{ p.prix_achat }} FCFA/€</div>
+                </td>
+
+                <!-- Marge -->
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-emerald-700">+{{ p.marge_unitaire }} FCFA/€</div>
+                  <div class="text-xs text-emerald-600">{{ p.taux_marge }}% marge</div>
+                </td>
+
+                <!-- Statut Badge -->
+                <td class="py-3.5 px-4 text-center">
+                  {% if p.statut_stock == 'RUPTURE' %}
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800 border border-rose-200">RUPTURE</span>
+                  {% elif p.statut_stock == 'STOCK FAIBLE' %}
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">STOCK FAIBLE</span>
+                  {% elif p.statut_stock == 'SURSTOCK' %}
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">SURSTOCK</span>
+                  {% else %}
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">STOCK NORMAL</span>
+                  {% endif %}
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3.5 px-4 text-right space-x-1">
+                  <a href="{% url 'stockapp:produit-modifier' p.pk %}" class="p-1.5 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg inline-block transition-colors" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form action="{% url 'stockapp:produit-supprimer' p.pk %}" method="post" class="inline" onsubmit="return confirm('Supprimer ce produit ?')">
+                    {% csrf_token %}
+                    <button type="submit" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Supprimer">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="py-8 text-center text-slate-500">
+                  <i class="fas fa-search text-3xl text-slate-300 mb-2 block"></i>
+                  Aucun produit ne correspond à votre recherche.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Side Column (1/3 Width): Alertes & Mouvements Récents -->
+    <div class="space-y-6">
+
+      <!-- Alertes Critiques Widget -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <h4 class="font-bold text-slate-800 text-sm flex items-center justify-between pb-3 border-b border-slate-100">
+          <span class="flex items-center gap-2 text-rose-700">
+            <i class="fas fa-bell"></i> Alertes Stock Critiques
+          </span>
+          <span class="text-xs bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">{{ alertes_critiques.count }}</span>
+        </h4>
+        
+        <div class="mt-3 space-y-2 max-h-60 overflow-y-auto pr-1">
+          {% for alerte in alertes_critiques %}
+            <div class="p-3 rounded-xl bg-rose-50/70 border border-rose-100 text-xs flex items-center justify-between">
+              <div>
+                <div class="font-bold text-slate-900">{{ alerte.produit.nom }}</div>
+                <div class="text-rose-700 mt-0.5">{{ alerte.message }}</div>
+              </div>
+              <a href="{% url 'stockapp:bon-de-commande' %}" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs shadow-sm flex items-center gap-1">
+                <i class="fas fa-shopping-cart"></i> Réappro
+              </a>
+            </div>
+          {% empty %}
+            <div class="text-xs text-slate-500 py-4 text-center">
+              <i class="fas fa-check-circle text-emerald-500 text-lg mb-1 block"></i>
+              Aucune alerte de stock en cours.
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Mouvements de Stock Récents (Audit Trail) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fas fa-history text-cyan-600"></i> Derniers Mouvements
+          </h4>
+          <a href="{% url 'stockapp:mouvements-list' %}" class="text-xs text-cyan-600 hover:underline font-semibold">Voir tout</a>
+        </div>
+
+        <div class="mt-3 space-y-2.5 max-h-80 overflow-y-auto pr-1">
+          {% for mvt in mouvements_recents %}
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-slate-800">{{ mvt.produit.nom }}</div>
+                <div class="text-slate-500 text-[11px] mt-0.5">
+                  <span class="font-mono">{{ mvt.date_mouvement|date:"d/m H:i" }}</span> — {{ mvt.stock_avant }} ➔ <strong class="text-slate-900">{{ mvt.stock_apres }}</strong>
+                </div>
+              </div>
+              <div>
+                {% if mvt.type_mouvement == 'VENTE' %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">-{{ mvt.quantite }} Vente</span>
+                {% elif mvt.type_mouvement == 'ACHAT' or mvt.type_mouvement == 'ENTREE' %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">+{{ mvt.quantite }} Entrée</span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">{{ mvt.type_mouvement }}</span>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-xs text-slate-500 py-4 text-center">Aucun mouvement enregistré.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal Ajustement d'Inventaire -->
+<div id="modal-ajustement" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in zoom-in duration-200">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+        <i class="fas fa-sliders-h text-cyan-600"></i> Ajustement d'Inventaire
+      </h3>
+      <button onclick="document.getElementById('modal-ajustement').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+    </div>
+
+    <form action="{% url 'stockapp:ajuster-stock' %}" method="post" class="mt-4 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Produit à ajuster</label>
+        {{ ajustement_form.produit }}
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Nouveau Stock Réel (Compté)</label>
+        {{ ajustement_form.nouveau_stock }}
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Motif de la régularisation</label>
+        {{ ajustement_form.motif }}
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+        <button type="button" onclick="document.getElementById('modal-ajustement').classList.add('hidden')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Annuler</button>
+        <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl shadow-md">Valider l'ajustement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

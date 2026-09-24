@@ -1,0 +1,167 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Rapports Z & Clôtures de Caisse — SMART-TECH{% endblock %}
+{% block page_title %}Audit des Clôtures de Caisse (Rapports Z){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 rounded-2xl text-white shadow-xl border border-cyan-500/20">
+    <div>
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <i class="fas fa-file-invoice-dollar text-cyan-400"></i> Historique des Rapports Z de Caisse
+      </h2>
+      <p class="text-xs text-cyan-200 mt-1">Audit financier des sessions de caisse, réconciliation des tiroirs et justification des écarts.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stockapp:cloture-caisse' %}" class="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+        <i class="fas fa-lock"></i> Nouvelle Clôture de Caisse
+      </a>
+      <a href="{% url 'stockapp:rapports-hub' %}" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 shadow-sm transition flex items-center gap-1.5">
+        <i class="fas fa-folder-open"></i> Hub Rapports & Exports
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Globaux Clôtures -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Total Sessions Clôturées</p>
+      <p class="text-2xl font-bold text-gray-900 mt-1">{{ metrics.total_clotures }}</p>
+      <p class="text-[11px] text-gray-400 mt-1">Rapports Z émis</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Chiffre d'Affaires Net Clôturé</p>
+      <p class="text-2xl font-bold text-emerald-600 mt-1">{{ metrics.total_ca_cloture|floatformat:2 }} <span class="text-xs text-gray-400">FCFA/€</span></p>
+      <p class="text-[11px] text-emerald-600 font-medium mt-1">Recettes cumulées</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Taux de Conformité Caisse</p>
+      <p class="text-2xl font-bold text-cyan-600 mt-1">{{ metrics.taux_conformite }}%</p>
+      <p class="text-[11px] text-gray-400 mt-1">{{ metrics.nb_conformes }} sans écart sur {{ metrics.total_clotures }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Solde Net des Écarts</p>
+      <p class="text-2xl font-bold {% if metrics.total_ecarts_net >= 0 %}text-emerald-600{% else %}text-red-600{% endif %} mt-1">
+        {% if metrics.total_ecarts_net >= 0 %}+{% endif %}{{ metrics.total_ecarts_net|floatformat:2 }}
+      </p>
+      <p class="text-[11px] text-gray-400 mt-1">{{ metrics.nb_ecarts }} session(s) avec écart</p>
+    </div>
+  </div>
+
+  <!-- Barre de filtrage -->
+  <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Date Début</label>
+        <input type="date" name="date_debut" value="{{ selected_date_debut }}" class="w-full h-10 px-3 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-cyan-500">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Date Fin</label>
+        <input type="date" name="date_fin" value="{{ selected_date_fin }}" class="w-full h-10 px-3 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-cyan-500">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Caissier</label>
+        <select name="caissier" class="w-full h-10 px-3 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-cyan-500">
+          <option value="">Tous les caissiers</option>
+          {% for u in caissiers %}
+          <option value="{{ u.id }}" {% if selected_caissier == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Statut Conformité</label>
+        <select name="statut" class="w-full h-10 px-3 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-cyan-500">
+          <option value="">Tous les statuts</option>
+          <option value="CONFORME" {% if selected_statut == 'CONFORME' %}selected{% endif %}>Conforme (0.00)</option>
+          <option value="DEFICIT" {% if selected_statut == 'DEFICIT' %}selected{% endif %}>Déficit (Manquant)</option>
+          <option value="EXCEDENT" {% if selected_statut == 'EXCEDENT' %}selected{% endif %}>Excédent (+ En trop)</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="submit" class="w-full h-10 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-1.5">
+          <i class="fas fa-filter"></i> Filtrer
+        </button>
+        <a href="{% url 'stockapp:clotures-caisse-list' %}" class="h-10 px-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl flex items-center justify-center text-xs" title="Réinitialiser">
+          <i class="fas fa-undo"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tableau des Rapports Z -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-gray-600">
+        <thead class="bg-slate-900 text-white font-bold uppercase text-[10px] tracking-wider">
+          <tr>
+            <th class="py-3 px-4">Réf. Rapport Z</th>
+            <th class="py-3 px-4">Date & Heure Clôture</th>
+            <th class="py-3 px-4">Caissier</th>
+            <th class="py-3 px-4 text-center">Tickets</th>
+            <th class="py-3 px-4 text-right">CA Net Encaissé</th>
+            <th class="py-3 px-4 text-right">Espèces Attendu</th>
+            <th class="py-3 px-4 text-right">Espèces Compté</th>
+            <th class="py-3 px-4 text-right">Écart Global</th>
+            <th class="py-3 px-4 text-center">Statut</th>
+            <th class="py-3 px-4 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for c in clotures %}
+          <tr class="hover:bg-cyan-50/40 transition-colors">
+            <td class="py-3 px-4 font-mono font-bold text-gray-900">
+              <a href="{% url 'stockapp:cloture-caisse-detail' c.pk %}" class="text-cyan-600 hover:underline">
+                {{ c.reference }}
+              </a>
+            </td>
+            <td class="py-3 px-4 whitespace-nowrap">{{ c.date_cloture|date:"d/m/Y H:i" }}</td>
+            <td class="py-3 px-4 font-medium text-gray-800">{{ c.caissier.get_full_name|default:c.caissier.username }}</td>
+            <td class="py-3 px-4 text-center font-bold">{{ c.nombre_tickets }}</td>
+            <td class="py-3 px-4 text-right font-bold text-gray-900">{{ c.total_ventes_net|floatformat:2 }}</td>
+            <td class="py-3 px-4 text-right text-gray-600">{{ c.total_tiroir_theorique|floatformat:2 }}</td>
+            <td class="py-3 px-4 text-right font-semibold text-gray-800">{{ c.montant_especes_reel|floatformat:2 }}</td>
+            <td class="py-3 px-4 text-right font-black {% if c.ecart_total == 0 %}text-emerald-600{% elif c.ecart_total < 0 %}text-red-600{% else %}text-cyan-600{% endif %}">
+              {% if c.ecart_total >= 0 %}+{% endif %}{{ c.ecart_total|floatformat:2 }}
+            </td>
+            <td class="py-3 px-4 text-center">
+              {% if c.statut_conformite == 'CONFORME' %}
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                Conforme
+              </span>
+              {% elif c.statut_conformite == 'DEFICIT' %}
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
+                Déficit
+              </span>
+              {% else %}
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800">
+                Excédent
+              </span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <a href="{% url 'stockapp:cloture-caisse-detail' c.pk %}" class="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition" title="Consulter la fiche détaillée">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a href="{% url 'stockapp:cloture-caisse-pdf' c.pk %}" target="_blank" class="p-1.5 bg-cyan-100 hover:bg-cyan-200 text-cyan-800 rounded-lg transition" title="Imprimer le Rapport Z PDF A4">
+                  <i class="fas fa-file-pdf"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="py-8 text-center text-gray-400">
+              <i class="fas fa-folder-open text-3xl mb-2 text-gray-300"></i>
+              <p>Aucun rapport Z de clôture de caisse enregistré.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

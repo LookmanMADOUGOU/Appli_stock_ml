@@ -1,0 +1,458 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Prévisions IA & Aide à la Décision — SMART-TECH{% endblock %}
+{% block page_title %}Prévisions IA & Aide à la Décision Opérationnelle{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Bannière Supérieure IA & Aide à la Décision -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 p-6 sm:p-8 rounded-3xl text-white shadow-xl border border-cyan-500/30">
+    <div class="space-y-1.5">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-400/30">
+        <i class="fas fa-brain text-cyan-400"></i> Intelligence Commerciale & Machine Learning (Phase 8)
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black tracking-tight">Tableau Stratégique d'Aide à la Décision</h2>
+      <p class="text-xs sm:text-sm text-slate-300 max-w-2xl">
+        Calcul scientifique du Point de Commande (ROP), du Stock de Sécurité dynamique, détection des produits dormants et simulation temporelle des ventes futures.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <a href="{% url 'stockapp:previsions-decision-pdf' %}" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/20 flex items-center gap-2 transition-colors shadow-sm">
+        <i class="fas fa-file-pdf text-rose-400"></i> Exporter Plan PDF
+      </a>
+      <a href="{% url 'stockapp:bon-de-commande' %}" class="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+        <i class="fas fa-robot text-sm"></i> Bon de Commande IA
+      </a>
+    </div>
+  </div>
+
+  <!-- Cartes KPI de Risque Prédictif & Budget Requis (6 Cartes) -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+    <!-- Total Surveillés -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+      <div class="flex items-center justify-between text-slate-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Analysés</span>
+        <i class="fas fa-boxes text-slate-600 text-sm"></i>
+      </div>
+      <div class="text-2xl font-black text-slate-900">{{ total_produits }}</div>
+      <span class="text-[10px] text-slate-400">Articles sous IA</span>
+    </div>
+
+    <!-- Risque Critique -->
+    <div class="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-1 bg-rose-50/20">
+      <div class="flex items-center justify-between text-rose-500">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-rose-700">Critique (≤ 3j)</span>
+        <i class="fas fa-exclamation-triangle text-rose-600 text-sm"></i>
+      </div>
+      <div class="text-2xl font-black text-rose-700">{{ nb_critique }}</div>
+      <span class="text-[10px] text-rose-600 font-medium">Rupture imminente / épuisé</span>
+    </div>
+
+    <!-- Risque Élevé -->
+    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-1 bg-amber-50/20">
+      <div class="flex items-center justify-between text-amber-500">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Élevé (≤ 7j)</span>
+        <i class="fas fa-clock text-amber-600 text-sm"></i>
+      </div>
+      <div class="text-2xl font-black text-amber-700">{{ nb_eleve }}</div>
+      <span class="text-[10px] text-amber-600 font-medium">Point de commande atteint</span>
+    </div>
+
+    <!-- Produits Dormants (Dead stock) -->
+    <div class="bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-1 bg-purple-50/20">
+      <div class="flex items-center justify-between text-purple-500">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700">Dormants (30j)</span>
+        <i class="fas fa-bed text-purple-600 text-sm"></i>
+      </div>
+      <div class="text-2xl font-black text-purple-700">{{ nb_dormant }}</div>
+      <span class="text-[10px] text-purple-600 font-medium">Zéro vente / stock immobilisé</span>
+    </div>
+
+    <!-- Surstock -->
+    <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm space-y-1 bg-blue-50/20">
+      <div class="flex items-center justify-between text-blue-500">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700">Surstock</span>
+        <i class="fas fa-layer-group text-blue-600 text-sm"></i>
+      </div>
+      <div class="text-2xl font-black text-blue-700">{{ nb_surstock }}</div>
+      <span class="text-[10px] text-blue-600 font-medium">Stock ≥ Stock maximal</span>
+    </div>
+
+    <!-- Budget Global Requis -->
+    <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-1 bg-emerald-50/20">
+      <div class="flex items-center justify-between text-emerald-500">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Budget Réappro</span>
+        <i class="fas fa-wallet text-emerald-600 text-sm"></i>
+      </div>
+      <div class="text-lg font-black text-emerald-700 truncate" title="{{ budget_total_reappro }}">{{ budget_total_reappro|floatformat:0 }} <span class="text-xs font-normal">FCFA/€</span></div>
+      <span class="text-[10px] text-emerald-600 font-medium">Pour couvrir les urgences</span>
+    </div>
+  </div>
+
+  <!-- SECTION INTERACTIVE : Simulateur Prédictif IA & Projection Temporelle -->
+  <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div>
+        <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+          <i class="fas fa-chart-line text-cyan-600"></i> Simulateur Prédictif & Projection Temporelle (14j Passé vs 14j Futur)
+        </h3>
+        <p class="text-xs text-slate-400 mt-0.5">Visualisez la demande historique et la trajectoire projetée par le modèle Machine Learning</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <label for="productSelector" class="text-xs font-bold text-slate-600 whitespace-nowrap">Article simulé :</label>
+        <select id="productSelector" class="h-9 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+          {% for itm in items %}
+          <option value="{{ itm.produit.id }}" {% if selected_item and selected_item.produit.id == itm.produit.id %}selected{% endif %}>
+            {{ itm.produit.nom }} ({{ itm.stock_actuel }} en stock)
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Graphique Chart.js (2 colonnes) -->
+      <div class="lg:col-span-2 space-y-3">
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-cyan-500"></span> Ventes Réelles (J-14 à J0)</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-500 border border-dashed border-purple-700"></span> Projection IA (J+1 à J+14)</span>
+          </div>
+          <span id="chartStatusBadge" class="px-2 py-0.5 rounded-md font-bold text-[11px] bg-slate-100 text-slate-700">
+            {% if simulator_data %}{{ simulator_data.statut_label }}{% endif %}
+          </span>
+        </div>
+        <div class="h-64 sm:h-72 w-full">
+          <canvas id="predictionTimeSeriesChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Panneau Pédagogique & Aide à la Décision (1 colonne) -->
+      <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center gap-2 text-cyan-800 font-bold text-xs uppercase tracking-wider mb-2">
+            <i class="fas fa-lightbulb text-amber-500"></i> Pourquoi & Quand commander ?
+          </div>
+          <h4 id="simulProdNom" class="text-base font-extrabold text-slate-900">
+            {% if simulator_data %}{{ simulator_data.produit_nom }}{% else %}Sélectionnez un produit{% endif %}
+          </h4>
+          <p id="simulExplication" class="text-xs text-slate-600 mt-2 leading-relaxed">
+            {% if simulator_data %}{{ simulator_data.explication }}{% endif %}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs pt-3 border-t border-slate-200">
+          <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+            <span class="text-[10px] text-slate-400 block uppercase font-bold">Stock Sécurité</span>
+            <span id="simulSafetyStock" class="text-sm font-black text-slate-800">
+              {% if simulator_data %}{{ simulator_data.safety_stock }} un.{% else %}-{% endif %}
+            </span>
+          </div>
+          <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+            <span class="text-[10px] text-slate-400 block uppercase font-bold">Point Commande (ROP)</span>
+            <span id="simulROP" class="text-sm font-black text-amber-600">
+              {% if simulator_data %}{{ simulator_data.rop }} un.{% else %}-{% endif %}
+            </span>
+          </div>
+          <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+            <span class="text-[10px] text-slate-400 block uppercase font-bold">À Commander</span>
+            <span id="simulQte" class="text-sm font-black text-cyan-700">
+              {% if simulator_data %}{{ simulator_data.qte_recommandee }} un.{% else %}-{% endif %}
+            </span>
+          </div>
+          <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+            <span class="text-[10px] text-slate-400 block uppercase font-bold">Budget Achat</span>
+            <span id="simulBudget" class="text-sm font-black text-emerald-700">
+              {% if simulator_data %}{{ simulator_data.budget_estime|floatformat:2 }} FCFA/€{% else %}-{% endif %}
+            </span>
+          </div>
+        </div>
+
+        <div id="simulActionBtnContainer">
+          {% if simulator_data and simulator_data.qte_recommandee > 0 %}
+          <a id="simulActionBtn" href="{% url 'stockapp:approvisionnements-list' %}?produit={{ simulator_data.produit_id }}" class="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-truck-loading"></i> Passer la Commande
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de Filtres et Recherche -->
+  <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+    <form method="get" class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <input type="text" name="q" value="{{ selected_query }}" placeholder="Rechercher par désignation, référence ou code produit..." class="w-full h-10 pl-10 pr-4 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      </div>
+      <div class="w-full sm:w-64">
+        <select name="categorie" onchange="this.form.submit()" class="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
+          <option value="">Toutes les catégories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_categorie == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="w-full sm:w-auto px-5 h-10 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow transition-colors">
+        Filtrer
+      </button>
+      {% if selected_query or selected_categorie %}
+      <a href="{% url 'stockapp:previsions-decision' %}" class="w-full sm:w-auto px-4 h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-xl flex items-center justify-center transition-colors">
+        Réinitialiser
+      </a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Tableau Stratégique d'Aide à la Décision -->
+  <div class="bg-white overflow-hidden rounded-3xl border border-slate-200 shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i class="fas fa-table-list text-cyan-600"></i> Diagnostic Exhaustif & Paramètres de Commande
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Tri par urgence stratégique (Ruptures critiques et réapprovisionnements en tête)</p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
+            <th class="py-3 px-4">Produit & Réf</th>
+            <th class="py-3 px-3 text-center">Stock</th>
+            <th class="py-3 px-3 text-center">Sécurité</th>
+            <th class="py-3 px-3 text-center">ROP</th>
+            <th class="py-3 px-3 text-center">Cadence</th>
+            <th class="py-3 px-3 text-center">Dynamique</th>
+            <th class="py-3 px-3 text-center">Échéance</th>
+            <th class="py-3 px-4">Diagnostic & Recommandation</th>
+            <th class="py-3 px-3 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-xs">
+          {% for item in items %}
+          <tr class="hover:bg-slate-50/80 transition-colors {% if item.niveau_risque == 'CRITIQUE' %}bg-rose-50/20{% elif item.niveau_risque == 'ELEVE' %}bg-amber-50/20{% elif item.is_dormant %}bg-purple-50/20{% endif %}">
+            
+            <!-- Produit & Réf -->
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-slate-900">{{ item.produit.nom }}</div>
+              <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                <span class="font-mono">{{ item.produit.reference }}</span>
+                {% if item.produit.categorie %}
+                <span>•</span>
+                <span class="text-cyan-700 bg-cyan-50 px-1.5 py-0.2 rounded text-[10px] font-medium">{{ item.produit.categorie.nom }}</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Stock Actuel -->
+            <td class="py-3.5 px-3 text-center">
+              <span class="font-mono font-bold text-sm {% if item.stock_actuel <= item.seuil_alerte %}text-rose-600{% else %}text-slate-800{% endif %}">
+                {{ item.stock_actuel }}
+              </span>
+            </td>
+
+            <!-- Stock Sécurité -->
+            <td class="py-3.5 px-3 text-center font-mono font-bold text-slate-600">
+              {{ item.safety_stock|default:"-" }}
+            </td>
+
+            <!-- Point Commande (ROP) -->
+            <td class="py-3.5 px-3 text-center font-mono font-bold text-amber-600">
+              {{ item.rop|default:"-" }}
+            </td>
+
+            <!-- Cadence de Vente -->
+            <td class="py-3.5 px-3 text-center">
+              <span class="font-mono font-bold text-slate-700">
+                {{ item.conso_moyenne|floatformat:1 }}
+              </span>
+              <span class="text-[10px] text-slate-400 block">un./j</span>
+            </td>
+
+            <!-- Dynamique -->
+            <td class="py-3.5 px-3 text-center">
+              <span class="text-[10px] font-medium text-slate-600 px-2 py-0.5 rounded-full bg-slate-100">
+                {{ item.tendance }}
+              </span>
+            </td>
+
+            <!-- Échéance Rupture -->
+            <td class="py-3.5 px-3 text-center font-mono">
+              {% if item.stock_actuel <= 0 %}
+              <span class="text-[11px] font-extrabold text-rose-600 bg-rose-100 px-2 py-0.5 rounded-md">
+                ÉPUISÉ
+              </span>
+              {% elif item.stockout_days and item.stockout_days < 999 %}
+              <span class="font-bold text-xs {% if item.stockout_days <= 3 %}text-rose-600{% elif item.stockout_days <= 7 %}text-amber-600{% else %}text-slate-700{% endif %}">
+                ~{{ item.stockout_days|floatformat:0 }}j
+              </span>
+              {% else %}
+              <span class="text-[11px] text-slate-400 font-medium">> 30j</span>
+              {% endif %}
+            </td>
+
+            <!-- Diagnostic IA & Recommandation -->
+            <td class="py-3.5 px-4 max-w-xs">
+              <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded border {{ item.badge_color }} mb-1">
+                {{ item.label_risque }}
+              </span>
+              <div class="text-[11px] {% if item.action_requise %}text-slate-900 font-semibold{% else %}text-slate-600{% endif %}">
+                {{ item.recommandation }}
+              </div>
+            </td>
+
+            <!-- Action -->
+            <td class="py-3.5 px-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button type="button" onclick="loadProductForecast({{ item.produit.id }})" class="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors" title="Simuler sur le graphique">
+                  <i class="fas fa-chart-line"></i>
+                </button>
+                {% if item.action_requise %}
+                <a href="{% url 'stockapp:approvisionnements-list' %}?produit={{ item.produit.id }}" class="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-bold rounded-lg shadow transition-colors" title="Créer un approvisionnement">
+                  Réappro
+                </a>
+                {% endif %}
+              </div>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="py-12 text-center text-slate-400">
+              <i class="fas fa-robot text-3xl mb-2 text-slate-300 block"></i>
+              Aucun produit ne correspond aux filtres sélectionnés.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Script Chart.js & Simulateur Interactif -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let timeSeriesChart = null;
+
+function renderChart(data) {
+  const ctx = document.getElementById('predictionTimeSeriesChart');
+  if (!ctx || !data || !data.labels) return;
+
+  if (timeSeriesChart) {
+    timeSeriesChart.destroy();
+  }
+
+  timeSeriesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Ventes Réelles Passées',
+          data: data.historical,
+          borderColor: '#06B6D4',
+          backgroundColor: 'rgba(6, 182, 212, 0.15)',
+          fill: true,
+          tension: 0.2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        },
+        {
+          label: 'Prévisions IA Futures (ML)',
+          data: data.forecast,
+          borderColor: '#A855F7',
+          backgroundColor: 'rgba(168, 85, 247, 0.1)',
+          borderDash: [5, 5],
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const val = context.parsed.y;
+              return val !== null ? ' ' + val + ' unité(s)' : '';
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0, 0, 0, 0.05)' },
+          title: { display: true, text: 'Quantité / Jour' }
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function updatePanel(data) {
+  document.getElementById('simulProdNom').innerText = data.produit_nom;
+  document.getElementById('simulExplication').innerText = data.explication;
+  document.getElementById('simulSafetyStock').innerText = data.safety_stock + ' un.';
+  document.getElementById('simulROP').innerText = data.rop + ' un.';
+  document.getElementById('simulQte').innerText = data.qte_recommandee + ' un.';
+  document.getElementById('simulBudget').innerText = Number(data.budget_estime).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' FCFA/€';
+
+  const badge = document.getElementById('chartStatusBadge');
+  if (badge) {
+    badge.innerText = data.statut_label;
+  }
+
+  const btnContainer = document.getElementById('simulActionBtnContainer');
+  if (btnContainer) {
+    if (data.qte_recommandee > 0) {
+      btnContainer.innerHTML = `<a href="/dashboard/approvisionnements/?produit=${data.produit_id}" class="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center justify-center gap-2"><i class="fas fa-truck-loading"></i> Passer la Commande (${data.qte_recommandee} un.)</a>`;
+    } else {
+      btnContainer.innerHTML = '';
+    }
+  }
+}
+
+function loadProductForecast(productId) {
+  const select = document.getElementById('productSelector');
+  if (select) select.value = productId;
+
+  fetch(`/dashboard/previsions-decision/api/produit/${productId}/`)
+    .then(r => r.json())
+    .then(data => {
+      renderChart(data);
+      updatePanel(data);
+    })
+    .catch(err => console.error("Erreur chargement simulation:", err));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const initialData = {{ simulator_json|safe }};
+  if (initialData && initialData.labels) {
+    renderChart(initialData);
+  }
+
+  const selector = document.getElementById('productSelector');
+  if (selector) {
+    selector.addEventListener('change', function() {
+      loadProductForecast(this.value);
+    });
+  }
+});
+</script>
+{% endblock %}

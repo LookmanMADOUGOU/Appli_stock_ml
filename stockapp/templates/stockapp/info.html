@@ -1,6 +1,6 @@
 {% extends 'stockapp/base.html' %}
 
-{% block title %}Info - Gestion Stock IA{% endblock %}
+{% block title %}Informations Publiques — SMART-TECH{% endblock %}
 
 {% block page_body %}
   <main class="bg-slate-950 text-slate-200">
@@ -36,35 +36,4 @@
       </div>
     </section>
   </main>
-{% endblock %}
-  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-    <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-10 shadow-2xl shadow-slate-950/30">
-      <div class="mb-8">
-        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">Informations publiques</p>
-        <h1 class="mt-4 text-4xl font-semibold text-white">À propos de la solution de gestion de stock</h1>
-        <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-300">Cette page est accessible sans authentification. Elle présente la mission, les fonctionnalités et l’usage principal de l’application de gestion de stock intelligente.</p>
-      </div>
-
-      <div class="grid gap-8 lg:grid-cols-3">
-        <div class="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-          <h2 class="text-xl font-semibold text-white">Notre mission</h2>
-          <p class="mt-4 text-sm leading-7 text-slate-300">Aider les équipes à suivre facilement les niveaux de stock, anticiper les ruptures et améliorer la fiabilité des prévisions produit.</p>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-          <h2 class="text-xl font-semibold text-white">Fonctionnalités clés</h2>
-          <ul class="mt-4 space-y-3 text-sm leading-7 text-slate-300">
-            <li>Gestion centralisée des produits et des stocks</li>
-            <li>Alertes de rupture de stock et gestion des seuils</li>
-            <li>Export PDF de rapport de stock</li>
-            <li>API REST sécurisée et authentification JWT</li>
-          </ul>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-          <h2 class="text-xl font-semibold text-white">Accès</h2>
-          <p class="mt-4 text-sm leading-7 text-slate-300">Les informations publiques restent ouvertes. Pour accéder aux tableaux de bord et aux exports, connectez-vous via <a href="/login/" class="font-semibold text-cyan-300 hover:text-cyan-200">la page de connexion</a>.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 {% endblock %}

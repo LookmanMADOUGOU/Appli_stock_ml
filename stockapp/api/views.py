@@ -13,12 +13,16 @@ from datetime import timedelta
 from django.db.models import Sum, F
 from django.shortcuts import get_object_or_404
 
-from stockapp.models import AlerteRupture, Approvisionnement, Categorie, Produit, Vente
+from stockapp.permissions import IsAdminUserRole, IsManagerUserRole, IsCashierUserRole, IsStockManagerUserRole
+
+
+from stockapp.models import AlerteRupture, Approvisionnement, Categorie, Produit, Vente, MouvementStock
 from .serializers import (
     AlerteRuptureSerializer,
     ApprovisionnementSerializer,
     ProduitSerializer,
     VenteSerializer,
+    MouvementStockSerializer,
 )
 
 
@@ -469,3 +473,13 @@ class ApprovisionnementViewSet(viewsets.ModelViewSet):
 class AlerteRuptureViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AlerteRupture.objects.select_related('produit').order_by('-date_creation')
     serializer_class = AlerteRuptureSerializer
+
+
+class MouvementStockViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MouvementStock.objects.select_related('produit', 'utilisateur').order_by('-date_mouvement')
+    serializer_class = MouvementStockSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['produit', 'type_mouvement']
+    search_fields = ['produit__nom', 'reference', 'commentaire']
+

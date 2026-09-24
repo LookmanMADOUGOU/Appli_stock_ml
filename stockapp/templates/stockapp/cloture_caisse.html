@@ -1,0 +1,283 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Clôture de Caisse (Rapport Z) — SMART-TECH{% endblock %}
+{% block page_title %}Clôture de Caisse Journalière{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 rounded-2xl text-white shadow-xl border border-cyan-500/20">
+    <div>
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <i class="fas fa-lock text-cyan-400"></i> Clôture de Caisse & Émission du Rapport Z
+      </h2>
+      <p class="text-xs text-cyan-200 mt-1">
+        Session active de <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>.
+        Déclarez le fond de caisse et le comptage physique du tiroir pour calculer les écarts.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stockapp:clotures-caisse-list' %}" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
+        <i class="fas fa-history"></i> Historique Rapports Z
+      </a>
+      <a href="{% url 'stockapp:caisse-pos' %}" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+        <i class="fas fa-cash-register"></i> Retour Caisse POS
+      </a>
+    </div>
+  </div>
+
+  <!-- Cartes KPI de la session en cours -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">CA Net Théorique</p>
+      <p class="text-xl font-bold text-gray-900 mt-1">{{ session_summary.total_net|floatformat:2 }} <span class="text-xs font-normal text-gray-500">FCFA/€</span></p>
+      <p class="text-[11px] text-emerald-600 font-medium mt-1"><i class="fas fa-check-circle"></i> {{ session_summary.nb_tickets }} ticket(s)</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Espèces Ventes</p>
+      <p class="text-xl font-bold text-emerald-600 mt-1">{{ session_summary.total_especes|floatformat:2 }}</p>
+      <p class="text-[11px] text-gray-400 mt-1">À encaisser au tiroir</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Carte Bancaire (TPE)</p>
+      <p class="text-xl font-bold text-cyan-600 mt-1">{{ session_summary.total_carte|floatformat:2 }}</p>
+      <p class="text-[11px] text-gray-400 mt-1">Relevé télécollecte</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 font-medium">Mobile Money</p>
+      <p class="text-xl font-bold text-amber-600 mt-1">{{ session_summary.total_mobile_money|floatformat:2 }}</p>
+      <p class="text-[11px] text-gray-400 mt-1">Relevé opérateur</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2 md:col-span-1">
+      <p class="text-xs text-gray-500 font-medium">Chèques / Crédits</p>
+      <p class="text-xl font-bold text-purple-600 mt-1">{{ session_summary.total_credit|floatformat:2 }}</p>
+      <p class="text-[11px] text-gray-400 mt-1">Comptes différés</p>
+    </div>
+  </div>
+
+  <!-- Formulaire & Calculateur dynamique d'écart (2 colonnes) -->
+  <form method="post" id="cloture-form">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Colonne Gauche : Saisie des réels -->
+      <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        <h3 class="text-base font-bold text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-3">
+          <i class="fas fa-coins text-cyan-600"></i> Comptage Physique & Déclaration de Caisse
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">
+              Fond de Caisse Initial (Ouverture) <span class="text-red-500">*</span>
+            </label>
+            {{ form.fond_de_caisse_initial }}
+            <span class="text-[11px] text-gray-400">Monnaie laissée au début de session</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">
+              Espèces Comptées dans le Tiroir <span class="text-red-500">*</span>
+            </label>
+            {{ form.montant_especes_reel }}
+            <span class="text-[11px] text-gray-400">Billetage + pièces comptés</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Total Télécollecte CB</label>
+            {{ form.montant_carte_reel }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Total Mobile Money</label>
+            {{ form.montant_mobile_money_reel }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Total Chèques</label>
+            {{ form.montant_cheque_reel }}
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Commentaires & Remarques</label>
+          {{ form.commentaire }}
+        </div>
+      </div>
+
+      <!-- Colonne Droite : Calculateur d'écart en direct -->
+      <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-xl border border-slate-700 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+            <h3 class="text-base font-bold flex items-center gap-2">
+              <i class="fas fa-calculator text-cyan-400"></i> Rapprochement de Caisse
+            </h3>
+            <span id="display-statut-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              CONFORME
+            </span>
+          </div>
+
+          <div class="space-y-3 py-4 text-xs">
+            <div class="flex justify-between items-center text-slate-300">
+              <span>Fond de Caisse Initial :</span>
+              <span id="val-fond-initial" class="font-semibold text-white">0.00 FCFA/€</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300">
+              <span>(+) Espèces Ventes Encaissées :</span>
+              <span class="font-semibold text-emerald-400">+{{ session_summary.total_especes|floatformat:2 }} FCFA/€</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-200 border-t border-slate-700/60 pt-2 font-bold">
+              <span>(=) Tiroir-Caisse Théorique Attendu :</span>
+              <span id="val-tiroir-theorique" class="text-cyan-300 text-sm">{{ session_summary.total_especes|floatformat:2 }} FCFA/€</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300 pt-1">
+              <span>Espèces Réellement Comptées :</span>
+              <span id="val-especes-reel" class="font-bold text-white text-sm">0.00 FCFA/€</span>
+            </div>
+
+            <!-- Écart Tiroir Espèces -->
+            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
+              <span class="font-bold text-xs">Écart Espèces (Tiroir) :</span>
+              <span id="val-ecart-especes" class="font-black text-base text-emerald-400">0.00 FCFA/€</span>
+            </div>
+
+            <!-- Écart Global Consolidé -->
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-cyan-500/30 flex justify-between items-center">
+              <span class="font-bold text-xs text-cyan-200">Écart Global Consolidé :</span>
+              <span id="val-ecart-global" class="font-black text-lg text-cyan-400">0.00 FCFA/€</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-700/80 space-y-2">
+          <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
+            <i class="fas fa-check-double"></i> Valider la Clôture (Émettre Rapport Z)
+          </button>
+          <p class="text-[11px] text-center text-slate-400">
+            Cette action rattachera les <strong>{{ session_summary.nb_ventes }}</strong> vente(s) de la session à ce rapport et journalisera l'audit.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- Détail des ventes non clôturées -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fas fa-receipt text-cyan-600"></i> Ventes de la Session en Cours ({{ session_summary.nb_ventes }})
+      </h3>
+      <span class="text-xs text-gray-500">Tickets non encore rattachés à un rapport Z</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-gray-600">
+        <thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] border-b border-gray-200">
+          <tr>
+            <th class="py-2.5 px-3">Date & Heure</th>
+            <th class="py-2.5 px-3">Ticket</th>
+            <th class="py-2.5 px-3">Client</th>
+            <th class="py-2.5 px-3">Article</th>
+            <th class="py-2.5 px-3 text-center">Quantité</th>
+            <th class="py-2.5 px-3 text-right">Prix Unitaire</th>
+            <th class="py-2.5 px-3 text-right">Net Payé</th>
+            <th class="py-2.5 px-3 text-center">Règlement</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for v in session_summary.ventes %}
+          <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="py-2 px-3 whitespace-nowrap">{{ v.date_vente|date:"d/m/Y H:i" }}</td>
+            <td class="py-2 px-3 font-mono font-bold text-gray-900">{{ v.reference_ticket|default:"-" }}</td>
+            <td class="py-2 px-3">{{ v.client.nom|default:"Comptoir" }}</td>
+            <td class="py-2 px-3 font-medium text-gray-800">{{ v.produit.nom }}</td>
+            <td class="py-2 px-3 text-center font-bold">{{ v.quantite }}</td>
+            <td class="py-2 px-3 text-right">{{ v.prix_unitaire|floatformat:2 }}</td>
+            <td class="py-2 px-3 text-right font-bold text-emerald-600">{{ v.prix_total|floatformat:2 }}</td>
+            <td class="py-2 px-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700">
+                {{ v.get_mode_paiement_display }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="py-6 text-center text-gray-400">
+              Aucune vente en attente de clôture.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const espTheorique = parseFloat("{{ session_summary.total_especes|stringformat:'f' }}") || 0;
+  const cbTheorique = parseFloat("{{ session_summary.total_carte|stringformat:'f' }}") || 0;
+  const momoTheorique = parseFloat("{{ session_summary.total_mobile_money|stringformat:'f' }}") || 0;
+  const chqTheorique = parseFloat("{{ session_summary.total_cheque|stringformat:'f' }}") || 0;
+
+  const inputFond = document.getElementById('id_fond_initial');
+  const inputEsp = document.getElementById('id_especes_reel');
+  const inputCb = document.getElementById('id_carte_reel');
+  const inputMomo = document.getElementById('id_momo_reel');
+  const inputChq = document.getElementById('id_cheque_reel');
+
+  const valFondInitial = document.getElementById('val-fond-initial');
+  const valTiroirTheorique = document.getElementById('val-tiroir-theorique');
+  const valEspReel = document.getElementById('val-especes-reel');
+  const valEcartEsp = document.getElementById('val-ecart-especes');
+  const valEcartGlobal = document.getElementById('val-ecart-global');
+  const badgeStatut = document.getElementById('display-statut-badge');
+
+  function updateCalculs() {
+    const fond = parseFloat(inputFond.value) || 0;
+    const esp = parseFloat(inputEsp.value) || 0;
+    const cb = parseFloat(inputCb.value) || 0;
+    const momo = parseFloat(inputMomo.value) || 0;
+    const chq = parseFloat(inputChq.value) || 0;
+
+    const tiroirTheo = fond + espTheorique;
+    const ecartEsp = esp - tiroirTheo;
+    const ecartCb = cb - cbTheorique;
+    const ecartMomo = momo - momoTheorique;
+    const ecartChq = chq - chqTheorique;
+    const ecartGlobal = ecartEsp + ecartCb + ecartMomo + ecartChq;
+
+    valFondInitial.textContent = fond.toFixed(2) + ' FCFA/€';
+    valTiroirTheorique.textContent = tiroirTheo.toFixed(2) + ' FCFA/€';
+    valEspReel.textContent = esp.toFixed(2) + ' FCFA/€';
+
+    valEcartEsp.textContent = (ecartEsp >= 0 ? '+' : '') + ecartEsp.toFixed(2) + ' FCFA/€';
+    valEcartGlobal.textContent = (ecartGlobal >= 0 ? '+' : '') + ecartGlobal.toFixed(2) + ' FCFA/€';
+
+    if (Math.abs(ecartGlobal) < 0.01) {
+      badgeStatut.textContent = 'CONFORME';
+      badgeStatut.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      valEcartGlobal.className = 'font-black text-lg text-emerald-400';
+    } else if (ecartGlobal < 0) {
+      badgeStatut.textContent = 'DÉFICIT (' + ecartGlobal.toFixed(2) + ')';
+      badgeStatut.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30';
+      valEcartGlobal.className = 'font-black text-lg text-red-400';
+    } else {
+      badgeStatut.textContent = 'EXCÉDENT (+' + ecartGlobal.toFixed(2) + ')';
+      badgeStatut.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30';
+      valEcartGlobal.className = 'font-black text-lg text-cyan-400';
+    }
+  }
+
+  [inputFond, inputEsp, inputCb, inputMomo, inputChq].forEach(input => {
+    if (input) {
+      input.addEventListener('input', updateCalculs);
+    }
+  });
+
+  updateCalculs();
+});
+</script>
+{% endblock %}

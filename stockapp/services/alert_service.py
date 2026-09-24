@@ -96,7 +96,7 @@ def generer_et_envoyer_resume_journalier(target_date=None) -> dict:
 
     alertes_actives_count = AlerteRupture.objects.filter(est_resolue=False).count()
 
-    subject = f"📊 Bilan Journalier {target_date.strftime('%d/%m/%Y')} — Stock App"
+    subject = f"📊 Bilan Journalier {target_date.strftime('%d/%m/%Y')} — SMART-TECH"
     body = (
         f"📊 RÉSUMÉ JOURNALIER DE CA & BÉNÉFICE ({target_date.strftime('%d/%m/%Y')})\n"
         f"--------------------------------------------------\n"
@@ -106,7 +106,7 @@ def generer_et_envoyer_resume_journalier(target_date=None) -> dict:
         f"🏆 Top Vente du Jour : {top_produit_name} ({top_qte} unités)\n"
         f"🚨 Alertes Stock Actives : {alertes_actives_count} produit(s)\n"
         f"--------------------------------------------------\n"
-        f"Rapport généré automatiquement par Gestion Stock IA."
+        f"Rapport généré automatiquement par SMART-TECH."
     )
 
     admin_email = getattr(settings, 'ADMIN_EMAIL', None) or 'admin@stockapp.local'

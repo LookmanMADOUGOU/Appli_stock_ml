@@ -1,0 +1,361 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Analytics Avancés & Performance Financière — SMART-TECH{% endblock %}
+{% block page_title %}Analytics Avancés & Rentabilité{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête / Bannière Analytics -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl border border-cyan-500/20">
+    <div class="space-y-1.5">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-xs font-semibold text-cyan-300">
+        <i class="fas fa-chart-line text-cyan-400"></i> Intelligence Financière & Rentabilité
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Performance Commerciale & Marges</h2>
+      <p class="text-xs sm:text-sm text-cyan-200/80 max-w-2xl">
+        Analyse multidimensionnelle du chiffre d'affaires, décomposition des marges brutes, segmentation matricielle des produits et rentabilité par catégorie.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stockapp:export-report-pdf' %}" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/10 flex items-center gap-2 transition-all">
+        <i class="fas fa-file-pdf text-cyan-300"></i> Exporter Bilan PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Synthèse Financière (6 Cartes Clés) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <!-- CA Global Net -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-gray-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">CA Net Global</span>
+        <i class="fas fa-coins text-cyan-500"></i>
+      </div>
+      <div class="text-xl font-extrabold text-gray-900">{{ ca_global|floatformat:2 }}</div>
+      <div class="text-[10px] text-gray-400">Après déduction remises</div>
+    </div>
+
+    <!-- Marge Brute Réelle -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-gray-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Marge Brute</span>
+        <i class="fas fa-chart-line text-emerald-500"></i>
+      </div>
+      <div class="text-xl font-extrabold text-emerald-600">{{ benefice_global|floatformat:2 }}</div>
+      <div class="flex items-center justify-between text-[10px]">
+        <span class="text-gray-400">Taux moyen :</span>
+        <span class="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">{{ taux_marge_global }}%</span>
+      </div>
+    </div>
+
+    <!-- COGS (Coût d'achat total) -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-gray-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Coût Ventes (COGS)</span>
+        <i class="fas fa-boxes-packing text-amber-500"></i>
+      </div>
+      <div class="text-xl font-extrabold text-gray-800">{{ cogs_global|floatformat:2 }}</div>
+      <div class="text-[10px] text-gray-400">Coût d'achat des articles vendus</div>
+    </div>
+
+    <!-- Panier Moyen -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-gray-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Panier Moyen</span>
+        <i class="fas fa-shopping-basket text-purple-500"></i>
+      </div>
+      <div class="text-xl font-extrabold text-purple-700">{{ panier_moyen|floatformat:2 }}</div>
+      <div class="flex items-center justify-between text-[10px] text-gray-400">
+        <span>{{ nb_tickets }} transaction(s)</span>
+        <span>~{{ articles_par_panier }} art./panier</span>
+      </div>
+    </div>
+
+    <!-- Volume Total Vendu -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-gray-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Volume Écoulé</span>
+        <i class="fas fa-cubes text-blue-500"></i>
+      </div>
+      <div class="text-xl font-extrabold text-blue-700">{{ volume_global }} <span class="text-xs font-normal text-gray-400">unités</span></div>
+      <div class="text-[10px] text-gray-400">Articles vendus en caisse</div>
+    </div>
+
+    <!-- Articles Sans Ventes (Dormants Catalogue) -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-gray-400">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Non Écoulés</span>
+        <i class="fas fa-box-open text-rose-500"></i>
+      </div>
+      <div class="text-xl font-extrabold text-rose-600">{{ articles_jamais_vendus }} <span class="text-xs font-normal text-gray-400">ref.</span></div>
+      <div class="text-[10px] text-gray-400">Articles sans historique de vente</div>
+    </div>
+  </div>
+
+  <!-- Baromètre Matrice de Rentabilité Produits (BCG SMART-TECH) -->
+  <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-sm">
+          <i class="fas fa-th-large"></i>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Matrice de Segmentation Commerciale des Produits</h3>
+          <p class="text-[11px] text-gray-400">Classification stratégique selon les volumes vendus et le niveau de marge brute unitaire</p>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <!-- Stars -->
+      <div class="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/70 space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5"><i class="fas fa-star text-amber-500"></i> Produits Stars</span>
+          <span class="text-base font-extrabold text-amber-800">{{ counts_matrice.stars }}</span>
+        </div>
+        <p class="text-[10px] text-amber-700/90">Fort volume de vente & marge élevée. Piliers stratégiques.</p>
+      </div>
+
+      <!-- Vaches à lait -->
+      <div class="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70 space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-emerald-900 flex items-center gap-1.5"><i class="fas fa-money-bill-wave text-emerald-500"></i> Vaches à Lait</span>
+          <span class="text-base font-extrabold text-emerald-800">{{ counts_matrice.cash_cows }}</span>
+        </div>
+        <p class="text-[10px] text-emerald-700/90">Générateurs de cash réguliers. Volume fort, marge modérée.</p>
+      </div>
+
+      <!-- Dilemmes / Potentiels -->
+      <div class="p-3.5 rounded-xl bg-cyan-50/60 border border-cyan-200/70 space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-cyan-900 flex items-center gap-1.5"><i class="fas fa-rocket text-cyan-500"></i> Fort Potentiel</span>
+          <span class="text-base font-extrabold text-cyan-800">{{ counts_matrice.potentials }}</span>
+        </div>
+        <p class="text-[10px] text-cyan-700/90">Marge forte mais volume timide. Opportunité d'accélération.</p>
+      </div>
+
+      <!-- Dormants -->
+      <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i class="fas fa-bed text-slate-400"></i> Dormants</span>
+          <span class="text-base font-extrabold text-slate-700">{{ counts_matrice.dormants }}</span>
+        </div>
+        <p class="text-[10px] text-slate-500">Faible rotation et marge basse. À déstocker ou revaloriser.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques Analytiques (2 Colonnes) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Chart 1 : Répartition CA par Catégorie (Doughnut) -->
+    <div class="lg:col-span-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+            <i class="fas fa-chart-pie text-cyan-600"></i> Répartition du Chiffre d'Affaires par Catégorie
+          </h3>
+          <p class="text-[11px] text-gray-400 mt-0.5">Part contributive de chaque famille d'articles</p>
+        </div>
+      </div>
+      <div class="h-64 flex items-center justify-center">
+        <canvas id="categoryDistributionChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 2 : Modes de Paiement (Horizontal Bars) -->
+    <div class="lg:col-span-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+            <i class="fas fa-wallet text-emerald-600"></i> Encaissés par Mode de Paiement
+          </h3>
+          <p class="text-[11px] text-gray-400 mt-0.5">Répartition des flux monétaires et crédits clients</p>
+        </div>
+      </div>
+      <div class="h-64 flex items-center justify-center">
+        <canvas id="paymentModesChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau Performance Détaillée par Catégorie -->
+  <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+          <i class="fas fa-tags text-cyan-600"></i> Rentabilité & Marges par Catégorie de Produits
+        </h3>
+        <p class="text-[11px] text-gray-400 mt-0.5">Détail des marges nettes et part de marché par famille de catalogue</p>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-gray-50 uppercase text-gray-500 font-semibold border-b text-[10px]">
+          <tr>
+            <th class="p-3">Catégorie</th>
+            <th class="p-3">Quantité Vendue</th>
+            <th class="p-3">Chiffre d'Affaires</th>
+            <th class="p-3">Coût d'Achat (COGS)</th>
+            <th class="p-3">Marge Nette</th>
+            <th class="p-3">Taux Marge %</th>
+            <th class="p-3">Part CA Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for cat in cat_summary %}
+          <tr class="hover:bg-gray-50/70 transition-colors">
+            <td class="p-3 font-bold text-gray-900">{{ cat.nom }}</td>
+            <td class="p-3 font-semibold text-gray-700">{{ cat.quantite }} un.</td>
+            <td class="p-3 font-bold text-gray-800">{{ cat.chiffre_affaires|floatformat:2 }}</td>
+            <td class="p-3 text-gray-500">{{ cat.cogs|floatformat:2 }}</td>
+            <td class="p-3 font-extrabold text-emerald-600">+{{ cat.benefice|floatformat:2 }}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800">
+                {{ cat.marge_pct }}%
+              </span>
+            </td>
+            <td class="p-3">
+              <div class="flex items-center gap-2">
+                <div class="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-cyan-600 h-1.5 rounded-full" style="width: {{ cat.part_ca_pct }}%"></div>
+                </div>
+                <span class="text-[10px] text-gray-500 font-semibold">{{ cat.part_ca_pct }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="p-6 text-center text-gray-400">Aucune donnée disponible.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Matrice des Produits & Performance Individuelle -->
+  <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+          <i class="fas fa-layer-group text-purple-600"></i> Matrice Détaillée de Rentabilité par Article
+        </h3>
+        <p class="text-[11px] text-gray-400 mt-0.5">Positionnement stratégique et recommandation d'arbitrage commercial</p>
+      </div>
+      <span class="text-xs text-gray-500 font-semibold">{{ prod_summary|length }} produit(s) analysé(s)</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-gray-50 uppercase text-gray-500 font-semibold border-b text-[10px]">
+          <tr>
+            <th class="p-3">Article & Référence</th>
+            <th class="p-3">Catégorie</th>
+            <th class="p-3">Volume Vendu</th>
+            <th class="p-3">Stock Actuel</th>
+            <th class="p-3">CA Réalisé</th>
+            <th class="p-3">Marge Nette</th>
+            <th class="p-3">Taux Marge %</th>
+            <th class="p-3">Statut Stratégique</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for p in prod_summary %}
+          <tr class="hover:bg-gray-50/70 transition-colors">
+            <td class="p-3">
+              <div class="font-bold text-gray-900">{{ p.nom }}</div>
+              <div class="text-[10px] text-gray-400 font-mono">{{ p.reference }}</div>
+            </td>
+            <td class="p-3 text-gray-600">{{ p.categorie }}</td>
+            <td class="p-3 font-semibold text-gray-800">{{ p.quantite }} un.</td>
+            <td class="p-3 font-mono text-gray-600">{{ p.stock_actuel }} un.</td>
+            <td class="p-3 font-bold text-gray-900">{{ p.ca|floatformat:2 }}</td>
+            <td class="p-3 font-extrabold text-emerald-600">+{{ p.benefice|floatformat:2 }}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                {{ p.marge_pct }}%
+              </span>
+            </td>
+            <td class="p-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold {{ p.matrice_badge }}">
+                <i class="{{ p.matrice_icon }}"></i> {{ p.matrice_label }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="p-6 text-center text-gray-400">Aucune vente enregistrée pour le moment.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Chart 1: Donut Catégories
+  const catLabels = {{ chart_cat_labels_json|safe }};
+  const catCA = {{ chart_cat_ca_json|safe }};
+
+  const ctxCat = document.getElementById('categoryDistributionChart').getContext('2d');
+  new Chart(ctxCat, {
+    type: 'doughnut',
+    data: {
+      labels: catLabels.length ? catLabels : ['Aucune vente'],
+      datasets: [{
+        data: catCA.length ? catCA : [1],
+        backgroundColor: [
+          '#0891b2', '#059669', '#d97706', '#8b5cf6',
+          '#e11d48', '#3b82f6', '#14b8a6', '#64748b'
+        ],
+        borderWidth: 2,
+        borderColor: '#ffffff',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { boxWidth: 12, font: { size: 11 } }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+
+  // Chart 2: Modes de paiement
+  const modeLabels = {{ chart_modes_labels_json|safe }};
+  const modeCA = {{ chart_modes_ca_json|safe }};
+
+  const ctxMode = document.getElementById('paymentModesChart').getContext('2d');
+  new Chart(ctxMode, {
+    type: 'bar',
+    data: {
+      labels: modeLabels.length ? modeLabels : ['Aucun encaissement'],
+      datasets: [{
+        label: 'CA Encaissé (FCFA/€)',
+        data: modeCA.length ? modeCA : [0],
+        backgroundColor: '#059669',
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

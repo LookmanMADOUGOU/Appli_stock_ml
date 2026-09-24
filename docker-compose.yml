@@ -1,0 +1,39 @@
+services:
+  smart-tech:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart_tech_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-smart-tech-production-key-change-me}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+    volumes:
+      # Persistance de la base de données SQLite
+      - smarttech_db:/app/db_data
+      # Persistance des archives de sauvegarde
+      - smarttech_backups:/app/backups
+      # Persistance des médias téléversés
+      - smarttech_media:/app/media
+      # Fichiers statiques collectés
+      - smarttech_static:/app/staticfiles
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/login/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  smarttech_db:
+    name: smarttech_sqlite_data
+  smarttech_backups:
+    name: smarttech_backups_data
+  smarttech_media:
+    name: smarttech_media_data
+  smarttech_static:
+    name: smarttech_static_data

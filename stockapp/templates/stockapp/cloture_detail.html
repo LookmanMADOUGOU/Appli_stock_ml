@@ -1,0 +1,206 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Rapport Z {{ cloture.reference }} — SMART-TECH{% endblock %}
+{% block page_title %}Détail de Clôture de Caisse (Rapport Z){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 rounded-2xl text-white shadow-xl border border-cyan-500/20">
+    <div>
+      <div class="flex items-center gap-3">
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          <i class="fas fa-receipt text-cyan-400"></i> Rapport Z : {{ cloture.reference }}
+        </h2>
+        {% if cloture.statut_conformite == 'CONFORME' %}
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          CONFORME
+        </span>
+        {% elif cloture.statut_conformite == 'DEFICIT' %}
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+          DÉFICIT ({{ cloture.ecart_total|floatformat:2 }})
+        </span>
+        {% else %}
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+          EXCÉDENT (+{{ cloture.ecart_total|floatformat:2 }})
+        </span>
+        {% endif %}
+      </div>
+      <p class="text-xs text-cyan-200 mt-1">
+        Clôturé le <strong>{{ cloture.date_cloture|date:"d/m/Y à H:i" }}</strong> par <strong>{{ cloture.caissier.get_full_name|default:cloture.caissier.username }}</strong>
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stockapp:cloture-caisse-pdf' cloture.pk %}" target="_blank" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2">
+        <i class="fas fa-file-pdf text-sm"></i> Télécharger Rapport Z (PDF A4)
+      </a>
+      <a href="{% url 'stockapp:clotures-caisse-list' %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+        <i class="fas fa-arrow-left"></i> Retour Liste
+      </a>
+    </div>
+  </div>
+
+  <!-- Grille Rapprochement & Tiroir-Caisse -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Carte 1 : Chiffre d'Affaires & Volumes -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+      <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-2">
+        1. Volumes & Recettes
+      </h3>
+      <div class="space-y-2.5 text-xs">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Total Ventes Brut :</span>
+          <span class="font-semibold text-gray-800">{{ cloture.total_ventes_brut|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">(-) Remises Accordées :</span>
+          <span class="font-semibold text-red-500">-{{ cloture.total_remises|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between border-t border-gray-100 pt-2 text-sm font-bold">
+          <span class="text-gray-900">(=) Chiffre d'Affaires Net :</span>
+          <span class="text-emerald-600">{{ cloture.total_ventes_net|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between border-t border-gray-100 pt-2 text-xs">
+          <span class="text-gray-500">Nombre de Tickets Encaissés :</span>
+          <span class="font-bold text-gray-900">{{ cloture.nombre_tickets }}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="text-gray-500">Nombre Total d'Articles Vendus :</span>
+          <span class="font-bold text-gray-900">{{ cloture.nombre_articles }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Audit du Tiroir-Caisse Espèces -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+      <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-2">
+        2. Audit du Tiroir-Caisse Espèces
+      </h3>
+      <div class="space-y-2.5 text-xs">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Fond de Caisse Initial :</span>
+          <span class="font-semibold text-gray-800">{{ cloture.fond_de_caisse_initial|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">(+) Espèces Encaissées :</span>
+          <span class="font-semibold text-emerald-600">+{{ cloture.total_especes_theorique|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between border-t border-gray-100 pt-2 font-bold">
+          <span class="text-gray-900">(=) Total Attendu dans Tiroir :</span>
+          <span class="text-cyan-700">{{ cloture.total_tiroir_theorique|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between pt-1">
+          <span class="text-gray-500">Espèces Réellement Comptées :</span>
+          <span class="font-bold text-gray-900">{{ cloture.montant_especes_reel|floatformat:2 }} FCFA/€</span>
+        </div>
+        <div class="flex justify-between border-t border-gray-100 pt-2 font-black text-sm">
+          <span>Écart sur Espèces :</span>
+          <span class="{% if cloture.ecart_especes == 0 %}text-emerald-600{% elif cloture.ecart_especes < 0 %}text-red-600{% else %}text-cyan-600{% endif %}">
+            {% if cloture.ecart_especes >= 0 %}+{% endif %}{{ cloture.ecart_especes|floatformat:2 }} FCFA/€
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Rapprochement Multi-moyens & Solde Net -->
+    <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md border border-slate-700 space-y-4 flex flex-col justify-between">
+      <div>
+        <h3 class="text-xs font-bold text-cyan-300 uppercase tracking-wider border-b border-slate-700 pb-2">
+          3. Rapprochement Consolidé
+        </h3>
+        <div class="space-y-2 text-xs py-2">
+          <div class="flex justify-between text-slate-300">
+            <span>Carte Bancaire (TPE) :</span>
+            <span class="font-medium text-white">{{ cloture.montant_carte_reel|floatformat:2 }} / {{ cloture.total_carte_theorique|floatformat:2 }}</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span>Mobile Money :</span>
+            <span class="font-medium text-white">{{ cloture.montant_mobile_money_reel|floatformat:2 }} / {{ cloture.total_mobile_money_theorique|floatformat:2 }}</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span>Chèques :</span>
+            <span class="font-medium text-white">{{ cloture.montant_cheque_reel|floatformat:2 }} / {{ cloture.total_cheque_theorique|floatformat:2 }}</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span>Crédits Accordés :</span>
+            <span class="font-medium text-purple-300">{{ cloture.total_credit_theorique|floatformat:2 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-slate-950/80 rounded-xl border border-cyan-500/20 flex justify-between items-center">
+        <span class="text-xs font-bold text-cyan-200">Écart Global Consolidé :</span>
+        <span class="text-lg font-black {% if cloture.ecart_total == 0 %}text-emerald-400{% elif cloture.ecart_total < 0 %}text-red-400{% else %}text-cyan-400{% endif %}">
+          {% if cloture.ecart_total >= 0 %}+{% endif %}{{ cloture.ecart_total|floatformat:2 }} FCFA/€
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Remarques de clôture si présentes -->
+  {% if cloture.commentaire %}
+  <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs text-amber-900">
+    <span class="font-bold flex items-center gap-1.5 mb-1"><i class="fas fa-comment-dots"></i> Remarques de clôture :</span>
+    {{ cloture.commentaire }}
+  </div>
+  {% endif %}
+
+  <!-- Liste des Ventes rattachées au Rapport Z -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fas fa-list-check text-cyan-600"></i> Ventes Rattachées à cette Clôture ({{ ventes.count }})
+      </h3>
+      <a href="{% url 'stockapp:export-ventes-detaillees-csv' %}" class="text-xs text-cyan-600 hover:underline font-semibold flex items-center gap-1">
+        <i class="fas fa-file-csv"></i> Exporter ces ventes
+      </a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-gray-600">
+        <thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] border-b border-gray-200">
+          <tr>
+            <th class="py-2.5 px-3">Date & Heure</th>
+            <th class="py-2.5 px-3">Ticket</th>
+            <th class="py-2.5 px-3">Client</th>
+            <th class="py-2.5 px-3">Désignation</th>
+            <th class="py-2.5 px-3 text-center">Quantité</th>
+            <th class="py-2.5 px-3 text-right">Prix Unitaire</th>
+            <th class="py-2.5 px-3 text-right">Remise</th>
+            <th class="py-2.5 px-3 text-right">Net Payé</th>
+            <th class="py-2.5 px-3 text-center">Règlement</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for v in ventes %}
+          <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="py-2 px-3 whitespace-nowrap">{{ v.date_vente|date:"d/m/Y H:i" }}</td>
+            <td class="py-2 px-3 font-mono font-bold text-gray-900">{{ v.reference_ticket|default:"-" }}</td>
+            <td class="py-2 px-3">{{ v.client.nom|default:"Comptoir" }}</td>
+            <td class="py-2 px-3 font-medium text-gray-800">{{ v.produit.nom }}</td>
+            <td class="py-2 px-3 text-center font-bold">{{ v.quantite }}</td>
+            <td class="py-2 px-3 text-right">{{ v.prix_unitaire|floatformat:2 }}</td>
+            <td class="py-2 px-3 text-right text-red-500">{% if v.remise > 0 %}-{{ v.remise|floatformat:2 }}{% else %}-{% endif %}</td>
+            <td class="py-2 px-3 text-right font-bold text-emerald-600">{{ v.prix_total|floatformat:2 }}</td>
+            <td class="py-2 px-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700">
+                {{ v.get_mode_paiement_display }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="py-6 text-center text-gray-400">
+              Aucune vente rattachée à cette session.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

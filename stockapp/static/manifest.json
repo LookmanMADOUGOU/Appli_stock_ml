@@ -1,14 +1,19 @@
 {
-  "name": "SMART-TECH Gestion Commerciale & Stock IA",
+  "name": "SMART-TECH — Gestion Commerciale & Stock IA",
   "short_name": "SMART-TECH",
-  "description": "Application PWA de gestion commerciale, stock, prédictions par IA et bilans financiers.",
-  "start_url": "/",
+  "description": "Application PWA complète de gestion commerciale, encaissement POS, gestion de stock et prévisions d'approvisionnement par IA.",
+  "start_url": "/dashboard/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#0891b2",
   "lang": "fr",
+  "categories": [
+    "business",
+    "productivity",
+    "finance"
+  ],
   "icons": [
     {
       "src": "/static/stockapp/images/icon-192.jpg",
@@ -21,6 +26,56 @@
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Caisse POS ⚡",
+      "short_name": "Caisse",
+      "description": "Terminal de caisse et encaissement tactile",
+      "url": "/dashboard/caisse/",
+      "icons": [
+        {
+          "src": "/static/stockapp/images/icon-192.jpg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Tableau de Bord",
+      "short_name": "Dashboard",
+      "description": "Vue générale exécutive et indicateurs",
+      "url": "/dashboard/",
+      "icons": [
+        {
+          "src": "/static/stockapp/images/icon-192.jpg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Stock & Inventaire",
+      "short_name": "Stock",
+      "description": "Consultation et ajustements d'inventaire",
+      "url": "/dashboard/stock/",
+      "icons": [
+        {
+          "src": "/static/stockapp/images/icon-192.jpg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Prévisions IA 🤖",
+      "short_name": "Prévisions",
+      "description": "Simulateur prédictif et commandes intelligentes",
+      "url": "/dashboard/previsions-decision/",
+      "icons": [
+        {
+          "src": "/static/stockapp/images/icon-192.jpg",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

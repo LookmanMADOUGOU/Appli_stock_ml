@@ -1,65 +1,117 @@
 {% extends 'stockapp/base.html' %}
-{% block title %}Produits - Gestion Stock IA{% endblock %}
-{% block page_title %}Produits{% endblock %}
+{% load static %}
+
+{% block title %}Gestion du Catalogue Produits — SMART-TECH{% endblock %}
+{% block page_title %}Gestion du Catalogue Produits{% endblock %}
 
 {% block content %}
-  <section class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-    <div class="grid gap-6 md:grid-cols-2">
-      <div class="card">
-        <div class="text-sm text-muted">Produits enregistrés</div>
-        <div class="mt-3 text-3xl font-semibold">{{ total_produits }}</div>
-      </div>
-      <div class="card">
-        <div class="text-sm text-muted">Produits en rupture</div>
-        <div class="mt-3 text-3xl font-semibold text-rose-600">{{ produits_en_rupture }}</div>
-      </div>
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <i class="fas fa-boxes text-cyan-600"></i> Catalogue Général des Produits
+      </h2>
+      <p class="text-xs text-gray-500 mt-1">Gérez le catalogue, suivez les marges unétaires et surveillez les prédictions IA de rupture.</p>
     </div>
+    <a href="{% url 'stockapp:produit-ajouter' %}" class="btn btn-primary px-4 py-2 text-xs font-bold rounded-xl shadow flex items-center gap-2">
+      <i class="fas fa-plus-circle"></i> Ajouter un Produit
+    </a>
+  </div>
 
-    <div class="card-glow">
-      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-900">Liste des produits</h2>
-          <p class="text-sm text-slate-500">Tous les produits et leur état de stock.</p>
-        </div>
-        <div class="text-sm text-slate-500">Les opérations d'ajout/modification/suppression sont réservées à l'administration Django. <a href="{% url 'admin:index' %}" class="text-cyan-600">Ouvrir l'administration</a></div>
+  <!-- Filtre & Recherche -->
+  <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+    <form method="get" class="flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="🔍 Rechercher par nom ou référence..." class="w-full h-10 pl-10 pr-4 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-cyan-500">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
       </div>
+      <select name="categorie" class="h-10 rounded-xl border border-gray-200 text-xs px-3 focus:ring-2 focus:ring-cyan-500">
+        <option value="">-- Toutes les Catégories --</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if request.GET.categorie == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nom }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="h-10 px-5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-xl transition-colors">Filtrer</button>
+    </form>
+  </div>
 
-      <div class="overflow-x-auto">
-        <table class="table-modern w-full">
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Réf.</th>
-              <th>Catégorie</th>
-              <th>Stock</th>
-              <th>Seuil</th>
-              <th>Statut</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for produit in produits %}
-              <tr>
-                <td class="font-medium">{{ produit.nom }}</td>
-                <td class="text-sm text-slate-500">{{ produit.reference }}</td>
-                <td>{% if produit.categorie %}<span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ produit.categorie.nom }}</span>{% else %}<span class="text-xs text-slate-400">Aucune</span>{% endif %}</td>
-                <td class="font-semibold">{{ produit.stock_actuel }}</td>
-                <td class="text-sm text-slate-500">{{ produit.seuil_alerte }}</td>
-                <td>{% if produit.rupture %}<span class="badge badge-danger">Rupture</span>{% else %}<span class="badge badge-success">OK</span>{% endif %}</td>
-                <td class="text-right">
-                  <div class="text-sm text-slate-600">Gestion via l'administration — <a href="{% url 'admin:index' %}" class="text-cyan-600">Accéder</a></div>
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-400">Aucun produit à afficher.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+  <!-- Tableau des Produits -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-gray-600">
+        <thead class="bg-gray-50 uppercase text-gray-700 font-semibold border-b text-[11px]">
+          <tr>
+            <th class="p-4">Produit & Réf</th>
+            <th class="p-4">Catégorie</th>
+            <th class="p-4">Prix Vente</th>
+            <th class="p-4">Prix Coût</th>
+            <th class="p-4">Marge %</th>
+            <th class="p-4">Stock Actuel</th>
+            <th class="p-4">Statut Stock</th>
+            <th class="p-4">Prévision IA</th>
+            <th class="p-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for p in produits %}
+          <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="p-4">
+              <div class="font-bold text-gray-900">{{ p.nom }}</div>
+              <div class="text-[10px] text-gray-400 font-mono">Ref: {{ p.reference }} {% if p.code_barres %}| EAN: {{ p.code_barres }}{% endif %}</div>
+            </td>
+            <td class="p-4">
+              {% if p.categorie %}
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">{{ p.categorie.nom }}</span>
+              {% else %}
+              <span class="text-gray-400">—</span>
+              {% endif %}
+            </td>
+            <td class="p-4 font-bold text-gray-900">{{ p.prix_unitaire }} FCFA/€</td>
+            <td class="p-4 text-gray-500">{{ p.prix_achat }} FCFA/€</td>
+            <td class="p-4">
+              <span class="font-bold text-emerald-600">+{{ p.taux_marge }}%</span>
+            </td>
+            <td class="p-4 font-extrabold text-sm text-gray-900">{{ p.stock_actuel }} <span class="text-[10px] font-normal text-gray-400">{{ p.unite }}</span></td>
+            <td class="p-4">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold 
+                {% if p.statut_stock == 'RUPTURE' %}bg-rose-100 text-rose-700 border border-rose-200
+                {% elif p.statut_stock == 'STOCK FAIBLE' %}bg-amber-100 text-amber-700 border border-amber-200
+                {% elif p.statut_stock == 'SURSTOCK' %}bg-blue-100 text-blue-700 border border-blue-200
+                {% else %}bg-emerald-100 text-emerald-700 border border-emerald-200{% endif %}">
+                {{ p.statut_stock }}
+              </span>
+            </td>
+            <td class="p-4">
+              <div class="text-[11px] font-semibold text-cyan-700">
+                <i class="fas fa-robot text-cyan-500 mr-1"></i> {{ p.prediction_ml }} un./j
+              </div>
+              <div class="text-[10px] text-gray-400">Rupture: dans {{ p.prediction_rupture }} j</div>
+            </td>
+            <td class="p-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <a href="{% url 'stockapp:produit-modifier' p.pk %}" class="p-1.5 text-cyan-600 hover:text-cyan-800" title="Modifier">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <form action="{% url 'stockapp:produit-supprimer' p.pk %}" method="post" class="inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer le produit {{ p.nom }} ?')">
+                  {% csrf_token %}
+                  <button type="submit" class="p-1.5 text-rose-500 hover:text-rose-700" title="Supprimer">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="p-8 text-center text-gray-400">
+              Aucun produit trouvé dans le catalogue.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </section>
-
-  <!-- Forms removed: management is via Django admin -->
+  </div>
+</div>
 {% endblock %}

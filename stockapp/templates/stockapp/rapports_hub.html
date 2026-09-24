@@ -1,0 +1,142 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Hub des Rapports & Exports Comptables — SMART-TECH{% endblock %}
+{% block page_title %}Hub des Rapports & Exports Multi-formats{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 rounded-2xl text-white shadow-xl border border-cyan-500/20">
+    <div>
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <i class="fas fa-folder-open text-cyan-400"></i> Centre Exécutif des Rapports & Exports
+      </h2>
+      <p class="text-xs text-cyan-200 mt-1">
+        Téléchargement direct des états comptables, inventaires valorisés, marges et documents officiels de gestion.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stockapp:clotures-caisse-list' %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
+        <i class="fas fa-receipt"></i> Clôtures Z de Caisse
+      </a>
+      <a href="{% url 'stockapp:dashboard' %}" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+        <i class="fas fa-chart-pie"></i> Tableau de Bord
+      </a>
+    </div>
+  </div>
+
+  <!-- Grille des Cartes de Rapports & Exports -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Carte 1 : Inventaire Valorisé -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+      <div class="space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-cyan-50 border border-cyan-100 text-cyan-600 flex items-center justify-center text-xl">
+          <i class="fas fa-boxes-stacked"></i>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Inventaire Complet Valorisé</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Export détaillé au format Excel / CSV : coût d'achat unitaire, valeur totale d'achat ({{ exp_data.total_valeur_achat|floatformat:2 }} FCFA/€), valeur potentielle de vente ({{ exp_data.total_valeur_vente|floatformat:2 }} FCFA/€) et marges prévisionnelles par article.
+        </p>
+      </div>
+      <div class="pt-5 border-t border-gray-100 mt-4">
+        <a href="{% url 'stockapp:export-stock-valorise-csv' %}" class="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+          <i class="fas fa-file-csv text-sm"></i> Exporter l'Inventaire (CSV Excel)
+        </a>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Journal des Ventes & Marges Réelles -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+      <div class="space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+          <i class="fas fa-receipt"></i>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Journal des Ventes & Marges</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Audit complet ligne par ligne : tickets de caisse, désignations, prix de vente, remises, coût d'achat réel, marge nette dégagée et mode de règlement (Espèces, Carte, Mobile Money, Crédit).
+        </p>
+      </div>
+      <div class="pt-5 border-t border-gray-100 mt-4">
+        <a href="{% url 'stockapp:export-ventes-detaillees-csv' %}" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+          <i class="fas fa-file-csv text-sm"></i> Exporter les Ventes & Marges
+        </a>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Compte de Résultat d'Exploitation -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+      <div class="space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center text-xl">
+          <i class="fas fa-scale-balanced"></i>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Compte de Résultat (P&L)</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Synthèse financière normalisée : Chiffre d'affaires net, Coût des ventes (COGS), Marge commerciale brute, ventilation des charges OPEX décaissées et Résultat Net estimé.
+        </p>
+      </div>
+      <div class="pt-5 border-t border-gray-100 mt-4">
+        <a href="{% url 'stockapp:export-compte-resultat-csv' %}" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+          <i class="fas fa-file-csv text-sm"></i> Exporter le Compte de Résultat
+        </a>
+      </div>
+    </div>
+
+    <!-- Carte 4 : Rapport Financier PDF A4 Officiel -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+      <div class="space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center text-xl">
+          <i class="fas fa-file-pdf"></i>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Rapport Financier Exécutif (PDF)</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Document d'édition A4 haute fidélité ReportLab : compte de résultat synthétique, bilan de trésorerie disponible, position nette créances / dettes et indicateurs de rentabilité.
+        </p>
+      </div>
+      <div class="pt-5 border-t border-gray-100 mt-4">
+        <a href="{% url 'stockapp:finance-report-pdf' %}" target="_blank" class="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+          <i class="fas fa-print text-sm"></i> Imprimer Rapport Financier (PDF)
+        </a>
+      </div>
+    </div>
+
+    <!-- Carte 5 : Prévisions IA & Bon de Commande IA -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+      <div class="space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-xl">
+          <i class="fas fa-brain"></i>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Aide à la Décision IA (PDF)</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Rapport prédictif de rupture de stock, calcul des points de commande et stocks de sécurité recommandés par algorithmes de régression Machine Learning Scikit-Learn.
+        </p>
+      </div>
+      <div class="pt-5 border-t border-gray-100 mt-4">
+        <a href="{% url 'stockapp:previsions-decision-pdf' %}" target="_blank" class="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+          <i class="fas fa-print text-sm"></i> Imprimer Rapport IA & Réappro (PDF)
+        </a>
+      </div>
+    </div>
+
+    <!-- Carte 6 : Journal d'Audit & Sécurité -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+      <div class="space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-xl">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Journal d'Audit Système (CSV)</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Extraction complète de la traçabilité des opérations : changements de prix de vente, ajustements de stocks manuels, suppressions et règlements de dettes.
+        </p>
+      </div>
+      <div class="pt-5 border-t border-gray-100 mt-4">
+        <a href="{% url 'stockapp:journal-audit-export-csv' %}" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+          <i class="fas fa-file-csv text-sm"></i> Exporter Journal d'Audit (CSV)
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

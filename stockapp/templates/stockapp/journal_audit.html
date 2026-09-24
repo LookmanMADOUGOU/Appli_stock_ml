@@ -1,0 +1,267 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Journal d'Audit Exécutif 🛡️ | SMART-TECH{% endblock %}
+{% block page_title %}Journal d'Audit & Sécurité{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Bannière Exécutive -->
+  <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 md:p-8 text-white shadow-xl border border-indigo-500/20">
+    <div class="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3 border border-indigo-500/30">
+          <i class="fas fa-shield-alt"></i> Phase 9 &bull; Gouvernance & Traçabilité Immuable
+        </div>
+        <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+          <span>Journal d'Audit Exécutif</span>
+          <span class="text-xl">🛡️</span>
+        </h1>
+        <p class="mt-2 text-sm text-slate-300 max-w-2xl leading-relaxed">
+          Traçabilité intégrale de toutes les opérations sensibles : modifications tarifaires, suppressions d'enregistrements, ajustements de stocks, décaissements et règlements financiers.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'stockapp:journal-audit-export-csv' %}?action={{ selected_action }}&module={{ selected_module }}&user={{ selected_user }}&q={{ selected_query }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-900/30 transition-all active:scale-95">
+          <i class="fas fa-file-csv text-base"></i>
+          <span>Exporter en CSV</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cartes KPI Exécutives -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Événements -->
+    <div class="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold shadow-inner">
+        <i class="fas fa-list-check"></i>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Événements</p>
+        <p class="text-2xl font-black text-slate-900 mt-0.5">{{ total_logs }}</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">{{ filtered_count }} filtré(s)</p>
+      </div>
+    </div>
+
+    <!-- Changements de Prix -->
+    <div class="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold shadow-inner">
+        <i class="fas fa-tag"></i>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Modifications Prix</p>
+        <p class="text-2xl font-black text-amber-600 mt-0.5">{{ nb_prix_changes }}</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Alertes tarifaires tracées</p>
+      </div>
+    </div>
+
+    <!-- Suppressions -->
+    <div class="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold shadow-inner">
+        <i class="fas fa-trash-can"></i>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Suppressions / Annul.</p>
+        <p class="text-2xl font-black text-rose-600 mt-0.5">{{ nb_suppressions }}</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Actions critiques consignées</p>
+      </div>
+    </div>
+
+    <!-- Ajustements de Stock -->
+    <div class="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl font-bold shadow-inner">
+        <i class="fas fa-sliders"></i>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ajustements Stock</p>
+        <p class="text-2xl font-black text-purple-600 mt-0.5">{{ nb_ajustements }}</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Régularisations manuelles</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres de Recherche Dynamiques -->
+  <div class="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
+      <!-- Recherche textuelle -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Recherche libre</label>
+        <div class="relative">
+          <input type="text" name="q" value="{{ selected_query }}" placeholder="Motif, produit, ticket, utilisateur..."
+                 class="w-full h-10 pl-9 pr-3 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all" />
+          <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Action -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Type d'Action</label>
+        <select name="action" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all bg-white">
+          <option value="">Toutes les actions</option>
+          {% for code, label in actions_choices %}
+            <option value="{{ code }}" {% if selected_action == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Module -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Module Système</label>
+        <select name="module" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all bg-white">
+          <option value="">Tous les modules</option>
+          {% for code, label in modules_choices %}
+            <option value="{{ code }}" {% if selected_module == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Boutons Filtrer & Réinitialiser -->
+      <div class="flex items-center gap-2">
+        <button type="submit" class="flex-1 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all">
+          <i class="fas fa-filter text-xs"></i> Filtrer
+        </button>
+        {% if selected_action or selected_module or selected_user or selected_query %}
+          <a href="{% url 'stockapp:journal-audit' %}" class="h-10 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold flex items-center justify-center transition-all" title="Réinitialiser les filtres">
+            <i class="fas fa-undo"></i>
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Table du Journal d'Audit -->
+  <div class="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-clock-rotate-left text-slate-500"></i>
+        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Événements Récents Consignés</h2>
+      </div>
+      <span class="text-xs font-semibold text-slate-500">
+        Affichage limité aux 150 événements les plus récents
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-700">
+        <thead class="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 tracking-wider border-b border-slate-200/80">
+          <tr>
+            <th class="px-6 py-3.5">Date & Heure</th>
+            <th class="px-6 py-3.5">Utilisateur</th>
+            <th class="px-6 py-3.5">Action</th>
+            <th class="px-6 py-3.5">Module</th>
+            <th class="px-6 py-3.5">Objet Visé</th>
+            <th class="px-6 py-3.5">Détail de l'Opération</th>
+            <th class="px-6 py-3.5 text-right">IP</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-normal">
+          {% for log in logs %}
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <!-- Date -->
+              <td class="px-6 py-3.5 whitespace-nowrap text-xs text-slate-500">
+                <span class="font-semibold text-slate-800">{{ log.date_creation|date:"d/m/Y" }}</span>
+                <span class="text-slate-400 ml-1">{{ log.date_creation|date:"H:i:s" }}</span>
+              </td>
+
+              <!-- Utilisateur -->
+              <td class="px-6 py-3.5 whitespace-nowrap">
+                <div class="flex items-center gap-2">
+                  <div class="h-7 w-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">
+                    {% if log.utilisateur %}{{ log.utilisateur.username|slice:":2"|upper }}{% else %}SYS{% endif %}
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-slate-800 leading-tight">
+                      {% if log.utilisateur %}{{ log.utilisateur.username }}{% else %}<span class="italic text-slate-400">Système</span>{% endif %}
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Action -->
+              <td class="px-6 py-3.5 whitespace-nowrap">
+                {% if log.action == 'CREATION' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fas fa-plus text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'MODIFICATION_PRIX' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                    <i class="fas fa-tag text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'MODIFICATION' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                    <i class="fas fa-pen text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'SUPPRESSION' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                    <i class="fas fa-trash text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'AJUSTEMENT_STOCK' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                    <i class="fas fa-sliders text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'VENTE' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                    <i class="fas fa-receipt text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'REGLEMENT_DETTE' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <i class="fas fa-hand-holding-dollar text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% elif log.action == 'DEPENSE' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                    <i class="fas fa-wallet text-[10px]"></i> {{ log.get_action_display }}
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    {{ log.get_action_display }}
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Module -->
+              <td class="px-6 py-3.5 whitespace-nowrap">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                  {{ log.get_module_display }}
+                </span>
+              </td>
+
+              <!-- Objet Visé -->
+              <td class="px-6 py-3.5 font-bold text-slate-800 text-xs max-w-xs truncate" title="{{ log.objet_concerne }}">
+                {{ log.objet_concerne }}
+              </td>
+
+              <!-- Description -->
+              <td class="px-6 py-3.5 text-xs text-slate-600 max-w-md">
+                {{ log.description }}
+              </td>
+
+              <!-- IP -->
+              <td class="px-6 py-3.5 whitespace-nowrap text-right font-mono text-[11px] text-slate-400">
+                {{ log.adresse_ip|default:"-" }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center">
+                <div class="inline-flex h-14 w-14 rounded-full bg-slate-100 text-slate-400 items-center justify-center text-2xl mb-3">
+                  <i class="fas fa-shield-halved"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800">Aucun événement d'audit trouvé</h3>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                  Aucun événement ne correspond aux critères de filtrage actuels. Modifiez vos filtres pour afficher l'historique.
+                </p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

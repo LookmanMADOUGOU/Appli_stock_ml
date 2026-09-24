@@ -167,21 +167,35 @@ def generate_purchase_order_pdf(order_data: dict) -> bytes:
     return buffer.getvalue()
 
 
-def convert_order_data_to_approvisionnements(order_data: dict, fournisseur_nom: str = "Fournisseur Automatique IA") -> int:
+def convert_order_data_to_approvisionnements(order_data: dict, fournisseur_nom: str = "Fournisseur Automatique IA", fournisseur_fk=None, user=None) -> int:
     """
     Convertit la suggestion de bon de commande en véritables enregistrements d'approvisionnements.
     """
+    from stockapp.models import Fournisseur
     created_count = 0
+
+    if not fournisseur_fk and fournisseur_nom:
+        fournisseur_fk, _ = Fournisseur.objects.get_or_create(nom=fournisseur_nom.strip())
+
+    nom_fournisseur_effectif = fournisseur_fk.nom if fournisseur_fk else fournisseur_nom
+
     for item in order_data.get('items', []):
         p_id = item['produit_id']
         qte = item['quantite_recommandee']
+        pu_achat = item.get('prix_achat_unitaire', 0.0)
         try:
             produit = Produit.objects.get(pk=p_id)
-            Approvisionnement.objects.create(
+            appro = Approvisionnement(
                 produit=produit,
                 quantite=qte,
-                fournisseur=fournisseur_nom
+                fournisseur=nom_fournisseur_effectif,
+                fournisseur_fk=fournisseur_fk,
+                cout_unitaire=pu_achat,
+                notes=f"Généré par Bon de Commande IA ({item.get('raison', 'Réapprovisionnement')})"
             )
+            if user:
+                appro._current_user = user
+            appro.save()
             created_count += 1
         except Produit.DoesNotExist:
             continue

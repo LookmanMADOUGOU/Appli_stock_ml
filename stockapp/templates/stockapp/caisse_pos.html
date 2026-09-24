@@ -1,0 +1,518 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Caisse POS & Enregistrement Ventes — SMART-TECH{% endblock %}
+{% block page_title %}Caisse Enregistreuse POS (Point de Vente){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête statut & Raccourcis -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950 p-6 rounded-2xl text-white shadow-xl border border-cyan-500/20">
+    <div>
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <i class="fas fa-cash-register text-emerald-400"></i> Terminal de Caisse Enregistreuse
+      </h2>
+      <p class="text-xs text-cyan-200 mt-1">Recherche par nom, référence ou code-barres. Encaissement multi-articles atomique.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      {% if recu_ref %}
+      <div class="flex items-center gap-2.5 bg-emerald-950/80 border border-emerald-500/50 p-2 rounded-xl">
+        <div class="text-xs text-emerald-200">
+          <span class="font-bold text-white">Ticket :</span> {{ recu_ref }}
+        </div>
+        {% if ventes_recu.first %}
+        <a href="{% url 'stockapp:vente-recu-pdf' ventes_recu.first.pk %}" target="_blank" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg shadow flex items-center gap-1 transition-colors">
+          <i class="fas fa-print"></i> Ticket
+        </a>
+        <a href="{% url 'stockapp:vente-facture-pdf' ventes_recu.first.pk %}" target="_blank" class="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs rounded-lg shadow flex items-center gap-1 transition-colors">
+          <i class="fas fa-file-invoice"></i> Facture
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <a href="{% url 'stockapp:cloture-caisse' %}" class="px-3.5 py-2 bg-slate-800/90 hover:bg-slate-700 text-cyan-300 hover:text-white text-xs font-bold rounded-xl border border-cyan-500/30 transition shadow-sm flex items-center gap-2">
+        <i class="fas fa-lock text-cyan-400"></i> Clôture (Rapport Z)
+      </a>
+      <a href="{% url 'stockapp:clotures-caisse-list' %}" class="px-3 py-2 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="Historique des Rapports Z">
+        <i class="fas fa-history"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Raccourcis Caisse Clavier -->
+  <div class="flex flex-wrap items-center gap-2 bg-slate-900/90 text-slate-300 px-4 py-2.5 rounded-xl text-xs border border-slate-700 shadow-sm">
+    <span class="font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-keyboard"></i> Raccourcis Clavier :</span>
+    <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700"><kbd class="text-white font-bold">F2</kbd> Chercher Produit</span>
+    <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700"><kbd class="text-white font-bold">F4</kbd> Saisie Espèces</span>
+    <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700"><kbd class="text-white font-bold">F9 / Ctrl+Entrée</kbd> Encaisser</span>
+    <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700"><kbd class="text-white font-bold">Échap</kbd> Vider Panier</span>
+  </div>
+
+  <!-- Layout Caisse : 2 Colonnes -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Colonne Gauche (7 cols) : Recherche & Grille Produits -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <div class="relative">
+          <input type="text" id="pos-search" placeholder="🔍 Rechercher un produit (Nom, Réf, SKU, Code-barres)..." class="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-inner">
+          <i class="fas fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+        </div>
+
+        <!-- Filtres par catégorie -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <button type="button" class="category-btn active px-3 py-1.5 rounded-lg bg-cyan-600 text-white font-semibold shadow-sm" data-cat="all">Toutes</button>
+          {% for cat in categories %}
+          <button type="button" class="category-btn px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium transition-colors" data-cat="{{ cat.id }}">{{ cat.nom }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Grille des produits -->
+      <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[580px] overflow-y-auto pr-1">
+        {% for produit in produits %}
+        <div class="product-card bg-white p-3 rounded-2xl border border-gray-100 hover:border-cyan-400 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between"
+             data-id="{{ produit.id }}"
+             data-nom="{{ produit.nom }}"
+             data-ref="{{ produit.reference }}"
+             data-sku="{{ produit.sku|default:'' }}"
+             data-code="{{ produit.code_barres|default:'' }}"
+             data-price="{{ produit.prix_unitaire }}"
+             data-stock="{{ produit.stock_actuel }}"
+             data-cat="{{ produit.categorie_id|default:0 }}">
+          <div>
+            <div class="flex justify-between items-start gap-1">
+              <span class="text-xs font-bold text-gray-800 line-clamp-2">{{ produit.nom }}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{{ produit.reference }}</span>
+            </div>
+            <div class="text-[11px] text-gray-400 mt-1">Ref: {{ produit.reference }}</div>
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-sm font-extrabold text-cyan-600">{{ produit.prix_unitaire }} FCFA/€</span>
+            <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold {% if produit.stock_actuel <= 0 %}bg-rose-100 text-rose-700{% elif produit.stock_actuel <= produit.seuil_alerte %}bg-amber-100 text-amber-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+              Stock: {{ produit.stock_actuel }}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Colonne Droite (5 cols) : Panier & Encaissement -->
+    <div class="lg:col-span-5 space-y-4">
+      <form id="pos-checkout-form" method="post" action="{% url 'stockapp:caisse-pos' %}" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between min-h-[580px]">
+        {% csrf_token %}
+        <input type="hidden" name="cart_data" id="cart_data_input">
+
+        <div>
+          <!-- Header Panier -->
+          <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+              <i class="fas fa-shopping-cart text-cyan-600"></i> Panier d'Achat
+            </h3>
+            <button type="button" id="clear-cart-btn" class="text-xs text-rose-600 hover:text-rose-700 font-medium">Vider</button>
+          </div>
+
+          <!-- Sélection Client -->
+          <div class="mt-4">
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-semibold text-gray-600">Client au Comptoir</label>
+              <span id="client-credit-badge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-md"></span>
+            </div>
+            <select name="client_id" id="pos-client-select" class="w-full h-9 rounded-xl border border-gray-200 bg-gray-50 text-xs px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+              <option value="" data-credit="0">-- Client Comptoir (Anonyme) --</option>
+              {% for client in clients %}
+              <option value="{{ client.id }}" data-credit="{{ client.solde_credit }}" data-tel="{{ client.telephone|default:'' }}">
+                {{ client.nom }} {% if client.telephone %}({{ client.telephone }}){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Items du panier -->
+          <div id="cart-items-container" class="mt-4 space-y-2 max-h-[220px] overflow-y-auto pr-1">
+            <div id="empty-cart-msg" class="py-8 text-center text-xs text-gray-400">
+              Le panier est vide.<br>Cliquez sur un produit à gauche ou scannez un code-barres.
+            </div>
+          </div>
+        </div>
+
+        <!-- Synthèse Totaux & Encaissement -->
+        <div class="mt-4 pt-4 border-t border-gray-100 space-y-3">
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between text-gray-500">
+              <span>Sous-total articles :</span>
+              <span id="pos-subtotal" class="font-medium text-gray-800">0.00 FCFA/€</span>
+            </div>
+            <div class="flex justify-between items-center text-gray-500">
+              <div class="flex items-center gap-1">
+                <span>Remise :</span>
+                <div class="inline-flex gap-1 ml-1.5">
+                  <button type="button" class="btn-quick-discount text-[10px] px-1.5 py-0.5 rounded bg-gray-100 hover:bg-cyan-100 text-gray-700 font-semibold transition-colors" data-pct="0">0%</button>
+                  <button type="button" class="btn-quick-discount text-[10px] px-1.5 py-0.5 rounded bg-gray-100 hover:bg-cyan-100 text-gray-700 font-semibold transition-colors" data-pct="5">5%</button>
+                  <button type="button" class="btn-quick-discount text-[10px] px-1.5 py-0.5 rounded bg-gray-100 hover:bg-cyan-100 text-gray-700 font-semibold transition-colors" data-pct="10">10%</button>
+                  <button type="button" class="btn-quick-discount text-[10px] px-1.5 py-0.5 rounded bg-gray-100 hover:bg-cyan-100 text-gray-700 font-semibold transition-colors" data-pct="20">20%</button>
+                </div>
+              </div>
+              <input type="number" step="0.01" min="0" name="remise_globale" id="pos-discount" value="0.00" class="w-24 h-7 text-right rounded-lg border border-gray-200 text-xs px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            </div>
+            <div class="flex justify-between text-base font-extrabold text-gray-900 pt-2 border-t">
+              <span>NET À PAYER :</span>
+              <span id="pos-net-total" class="text-cyan-600 text-lg">0.00 FCFA/€</span>
+            </div>
+          </div>
+
+          <!-- Mode de paiement -->
+          <div class="grid grid-cols-2 gap-2 pt-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-1">Mode de Paiement</label>
+              <select name="mode_paiement" id="pos-mode-pay" class="w-full h-9 rounded-xl border border-gray-200 text-xs px-2 focus:ring-2 focus:ring-cyan-500">
+                {% for code, label in mode_paiement_choices %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-1">Montant Reçu</label>
+              <input type="number" step="0.01" id="pos-tendered" placeholder="0.00" class="w-full h-9 rounded-xl border border-gray-200 text-xs px-2 text-right focus:ring-2 focus:ring-cyan-500">
+            </div>
+          </div>
+
+          <!-- Monnaie à rendre -->
+          <div id="change-due-box" class="hidden flex justify-between items-center bg-emerald-50 border border-emerald-200 text-emerald-800 p-2.5 rounded-xl text-xs font-bold">
+            <span>MONNAIE À RENDRE :</span>
+            <span id="pos-change-due" class="text-sm">0.00 FCFA/€</span>
+          </div>
+
+          <button type="submit" id="pos-submit-btn" disabled class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-check-circle text-lg"></i> ENCAISSER ET VALIDER
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let cart = [];
+
+  const searchInput = document.getElementById('pos-search');
+  const catButtons = document.querySelectorAll('.category-btn');
+  const productCards = document.querySelectorAll('.product-card');
+  const cartContainer = document.getElementById('cart-items-container');
+  const emptyCartMsg = document.getElementById('empty-cart-msg');
+  const clearCartBtn = document.getElementById('clear-cart-btn');
+  const subtotalEl = document.getElementById('pos-subtotal');
+  const discountInput = document.getElementById('pos-discount');
+  const netTotalEl = document.getElementById('pos-net-total');
+  const tenderedInput = document.getElementById('pos-tendered');
+  const changeBox = document.getElementById('change-due-box');
+  const changeDueEl = document.getElementById('pos-change-due');
+  const submitBtn = document.getElementById('pos-submit-btn');
+  const cartDataInput = document.getElementById('cart_data_input');
+  const checkoutForm = document.getElementById('pos-checkout-form');
+
+  let activeCat = 'all';
+
+  function filterProducts() {
+    const q = searchInput.value.toLowerCase().trim();
+    productCards.forEach(card => {
+      const nom = card.dataset.nom.toLowerCase();
+      const ref = card.dataset.ref.toLowerCase();
+      const sku = card.dataset.sku.toLowerCase();
+      const code = card.dataset.code.toLowerCase();
+      const cat = card.dataset.cat;
+
+      const matchesSearch = nom.includes(q) || ref.includes(q) || sku.includes(q) || code.includes(q);
+      const matchesCat = (activeCat === 'all' || cat === activeCat);
+
+      if (matchesSearch && matchesCat) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+
+  searchInput.addEventListener('input', filterProducts);
+
+  catButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      catButtons.forEach(b => b.classList.remove('bg-cyan-600', 'text-white', 'font-semibold'));
+      catButtons.forEach(b => b.classList.add('bg-gray-100', 'text-gray-600'));
+      btn.classList.remove('bg-gray-100', 'text-gray-600');
+      btn.classList.add('bg-cyan-600', 'text-white', 'font-semibold');
+      activeCat = btn.dataset.cat;
+      filterProducts();
+    });
+  });
+
+  productCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const pId = parseInt(card.dataset.id);
+      const pNom = card.dataset.nom;
+      const pRef = card.dataset.ref;
+      const pPrice = parseFloat(card.dataset.price);
+      const pStock = parseInt(card.dataset.stock);
+
+      if (pStock <= 0) {
+        alert("Ce produit est en rupture de stock !");
+        return;
+      }
+
+      const existingIndex = cart.findIndex(item => item.produit_id === pId);
+      if (existingIndex > -1) {
+        if (cart[existingIndex].quantite < pStock) {
+          cart[existingIndex].quantite += 1;
+        } else {
+          alert(`Stock maximum atteint pour ${pNom} (${pStock} max)`);
+        }
+      } else {
+        cart.push({
+          produit_id: pId,
+          nom: pNom,
+          reference: pRef,
+          prix_unitaire: pPrice,
+          quantite: 1,
+          stock: pStock
+        });
+      }
+      renderCart();
+    });
+  });
+
+  function renderCart() {
+    cartContainer.innerHTML = '';
+
+    if (cart.length === 0) {
+      cartContainer.appendChild(emptyCartMsg);
+      submitBtn.disabled = true;
+    } else {
+      submitBtn.disabled = false;
+      cart.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs';
+        row.innerHTML = `
+          <div class="flex-1 pr-2">
+            <div class="font-bold text-gray-800">${item.nom}</div>
+            <div class="text-[10px] text-gray-400">${item.prix_unitaire.toFixed(2)} FCFA/€</div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" class="btn-dec h-6 w-6 rounded bg-gray-200 text-gray-700 font-bold hover:bg-gray-300" data-index="${index}">-</button>
+            <input type="number" min="1" max="${item.stock}" value="${item.quantite}" class="item-qte w-10 h-6 text-center border rounded text-xs font-semibold" data-index="${index}">
+            <button type="button" class="btn-inc h-6 w-6 rounded bg-gray-200 text-gray-700 font-bold hover:bg-gray-300" data-index="${index}">+</button>
+          </div>
+          <div class="w-16 text-right font-bold text-gray-900 ml-2">
+            ${(item.prix_unitaire * item.quantite).toFixed(2)}
+          </div>
+          <button type="button" class="btn-del text-rose-500 hover:text-rose-700 ml-2" data-index="${index}">
+            <i class="fas fa-trash-alt text-xs"></i>
+          </button>
+        `;
+        cartContainer.appendChild(row);
+      });
+    }
+
+    calculateTotals();
+    attachCartEvents();
+  }
+
+  function attachCartEvents() {
+    document.querySelectorAll('.btn-dec').forEach(b => {
+      b.addEventListener('click', (e) => {
+        const idx = parseInt(e.target.dataset.index);
+        if (cart[idx].quantite > 1) {
+          cart[idx].quantite -= 1;
+        } else {
+          cart.splice(idx, 1);
+        }
+        renderCart();
+      });
+    });
+
+    document.querySelectorAll('.btn-inc').forEach(b => {
+      b.addEventListener('click', (e) => {
+        const idx = parseInt(e.target.dataset.index);
+        if (cart[idx].quantite < cart[idx].stock) {
+          cart[idx].quantite += 1;
+        } else {
+          alert(`Stock maximum atteint (${cart[idx].stock})`);
+        }
+        renderCart();
+      });
+    });
+
+    document.querySelectorAll('.item-qte').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.dataset.index);
+        let newQ = parseInt(e.target.value) || 1;
+        newQ = Math.max(1, Math.min(newQ, cart[idx].stock));
+        cart[idx].quantite = newQ;
+        renderCart();
+      });
+    });
+
+    document.querySelectorAll('.btn-del').forEach(b => {
+      b.addEventListener('click', (e) => {
+        const idx = parseInt(e.target.closest('button').dataset.index);
+        cart.splice(idx, 1);
+        renderCart();
+      });
+    });
+  }
+
+  function calculateTotals() {
+    let subtotal = 0;
+    cart.forEach(item => {
+      subtotal += item.prix_unitaire * item.quantite;
+    });
+
+    let discount = parseFloat(discountInput.value) || 0;
+    let net = Math.max(subtotal - discount, 0);
+
+    subtotalEl.textContent = subtotal.toFixed(2) + ' FCFA/€';
+    netTotalEl.textContent = net.toFixed(2) + ' FCFA/€';
+
+    let tendered = parseFloat(tenderedInput.value) || 0;
+    if (tendered > 0) {
+      let change = tendered - net;
+      changeBox.classList.remove('hidden');
+      changeDueEl.textContent = (change >= 0 ? change.toFixed(2) : '0.00') + ' FCFA/€';
+    } else {
+      changeBox.classList.add('hidden');
+    }
+  }
+
+  const clientSelect = document.getElementById('pos-client-select');
+  const clientCreditBadge = document.getElementById('client-credit-badge');
+  const modePaySelect = document.getElementById('pos-mode-pay');
+  const quickDiscountBtns = document.querySelectorAll('.btn-quick-discount');
+
+  function updateClientCreditBadge() {
+    if (!clientSelect) return;
+    const opt = clientSelect.options[clientSelect.selectedIndex];
+    if (!opt || !opt.value) {
+      if (clientCreditBadge) clientCreditBadge.classList.add('hidden');
+      return;
+    }
+    const credit = parseFloat(opt.dataset.credit) || 0;
+    if (clientCreditBadge) {
+      clientCreditBadge.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-amber-100', 'text-amber-800');
+      if (credit > 0) {
+        clientCreditBadge.classList.add('bg-amber-100', 'text-amber-800');
+        clientCreditBadge.innerHTML = `<i class="fas fa-exclamation-circle text-[10px]"></i> Crédit dû : ${credit.toLocaleString('fr-FR', {minimumFractionDigits: 2})} FCFA`;
+      } else {
+        clientCreditBadge.classList.add('bg-emerald-100', 'text-emerald-800');
+        clientCreditBadge.innerHTML = `<i class="fas fa-check-circle text-[10px]"></i> Compte à jour (0 FCFA)`;
+      }
+    }
+  }
+
+  if (clientSelect) {
+    clientSelect.addEventListener('change', updateClientCreditBadge);
+    updateClientCreditBadge();
+  }
+
+  if (modePaySelect) {
+    modePaySelect.addEventListener('change', () => {
+      if (modePaySelect.value === 'CREDIT') {
+        if (!clientSelect.value) {
+          alert("⚠️ Attention : Une vente à crédit nécessite de sélectionner un client identifié.");
+        }
+        tenderedInput.value = '';
+        changeBox.classList.add('hidden');
+      }
+    });
+  }
+
+  quickDiscountBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pct = parseFloat(btn.dataset.pct) || 0;
+      let subtotal = 0;
+      cart.forEach(item => { subtotal += item.prix_unitaire * item.quantite; });
+      const discountVal = (subtotal * pct / 100).toFixed(2);
+      discountInput.value = discountVal;
+      calculateTotals();
+    });
+  });
+
+  discountInput.addEventListener('input', calculateTotals);
+  tenderedInput.addEventListener('input', calculateTotals);
+
+  clearCartBtn.addEventListener('click', () => {
+    cart = [];
+    renderCart();
+  });
+
+  // Scanner code-barres et validation rapide par touche Entrée
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const visibleCards = Array.from(productCards).filter(c => !c.classList.contains('hidden'));
+      if (visibleCards.length === 1) {
+        visibleCards[0].click();
+        searchInput.value = '';
+        filterProducts();
+      } else if (visibleCards.length > 1) {
+        const val = searchInput.value.trim().toLowerCase();
+        const exactMatch = visibleCards.find(c => 
+          (c.dataset.code && c.dataset.code.toLowerCase() === val) || 
+          (c.dataset.ref && c.dataset.ref.toLowerCase() === val) || 
+          (c.dataset.sku && c.dataset.sku.toLowerCase() === val)
+        );
+        if (exactMatch) {
+          exactMatch.click();
+          searchInput.value = '';
+          filterProducts();
+        }
+      }
+    }
+  });
+
+  // Raccourcis Clavier Globaux (F2, F4, F9, Ctrl+Enter, Escape)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    } else if (e.key === 'F4') {
+      e.preventDefault();
+      tenderedInput.focus();
+      tenderedInput.select();
+    } else if (e.key === 'F9' || (e.ctrlKey && e.key === 'Enter')) {
+      e.preventDefault();
+      if (!submitBtn.disabled) {
+        checkoutForm.requestSubmit();
+      }
+    } else if (e.key === 'Escape') {
+      if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+      } else if (cart.length > 0) {
+        if (confirm("Voulez-vous réinitialiser le panier en cours ?")) {
+          cart = [];
+          renderCart();
+        }
+      }
+    }
+  });
+
+  checkoutForm.addEventListener('submit', (e) => {
+    if (cart.length === 0) {
+      e.preventDefault();
+      alert("Le panier est vide.");
+      return;
+    }
+    if (modePaySelect && modePaySelect.value === 'CREDIT' && (!clientSelect || !clientSelect.value)) {
+      e.preventDefault();
+      alert("Veuillez sélectionner un client pour valider une vente à crédit.");
+      clientSelect.focus();
+      return;
+    }
+    cartDataInput.value = JSON.stringify(cart);
+  });
+});
+</script>
+{% endblock %}

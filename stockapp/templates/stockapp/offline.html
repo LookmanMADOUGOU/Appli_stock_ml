@@ -1,0 +1,81 @@
+{% extends 'stockapp/base.html' %}
+{% load static %}
+
+{% block title %}Mode Hors-Ligne &bull; SMART-TECH{% endblock %}
+{% block page_title %}Mode Hors-Ligne{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl text-center space-y-6">
+    <!-- Animated Offline Icon -->
+    <div class="relative mx-auto w-24 h-24 rounded-3xl bg-amber-50 text-amber-500 flex items-center justify-center text-4xl shadow-inner border border-amber-200/60">
+      <i class="fas fa-wifi-slash"></i>
+      <span class="absolute -top-1 -right-1 flex h-4 w-4">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-4 w-4 bg-amber-500"></span>
+      </span>
+    </div>
+
+    <!-- Title & Explanation -->
+    <div>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 mb-3">
+        <i class="fas fa-signal"></i> Connexion Internet Interrompue
+      </span>
+      <h2 class="text-2xl font-black text-slate-900 tracking-tight">Mode Hors-Ligne Actif</h2>
+      <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+        Votre terminal a perdu l'accès au serveur. Ne vous inquiétez pas : vos pages et données mises en cache locale par la PWA SMART-TECH restent consultables.
+      </p>
+    </div>
+
+    <!-- Live Status Banner -->
+    <div id="offline-network-status" class="py-2.5 px-4 rounded-xl bg-slate-50 text-xs font-semibold text-slate-600 border border-slate-200 flex items-center justify-center gap-2">
+      <i class="fas fa-circle-dot text-amber-500"></i>
+      <span>En attente du rétablissement du réseau...</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="pt-2 space-y-2.5">
+      <button onclick="checkConnectionAndReload()" class="w-full h-11 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+        <i class="fas fa-rotate-right"></i>
+        <span>Réessayer la connexion</span>
+      </button>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <a href="/dashboard/" class="h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+          <i class="fas fa-chart-line text-slate-500"></i> Dashboard
+        </a>
+        <a href="/dashboard/caisse/" class="h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+          <i class="fas fa-cash-register text-emerald-600"></i> Caisse POS
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function checkConnectionAndReload() {
+    const statusEl = document.getElementById('offline-network-status');
+    if (statusEl) {
+      statusEl.innerHTML = '<i class="fas fa-spinner fa-spin text-cyan-600"></i> <span>Vérification de la connectivité...</span>';
+    }
+    if (navigator.onLine) {
+      window.location.reload();
+    } else {
+      setTimeout(() => {
+        if (statusEl) {
+          statusEl.innerHTML = '<i class="fas fa-triangle-exclamation text-rose-500"></i> <span class="text-rose-600">Toujours hors-ligne. Vérifiez votre Wi-Fi/4G.</span>';
+        }
+      }, 1000);
+    }
+  }
+
+  window.addEventListener('online', () => {
+    const statusEl = document.getElementById('offline-network-status');
+    if (statusEl) {
+      statusEl.className = 'py-2.5 px-4 rounded-xl bg-emerald-50 text-xs font-bold text-emerald-800 border border-emerald-200 flex items-center justify-center gap-2';
+      statusEl.innerHTML = '<i class="fas fa-check-circle text-emerald-600"></i> <span>Connexion rétablie ! Rechargement...</span>';
+    }
+    setTimeout(() => { window.location.reload(); }, 1200);
+  });
+</script>
+{% endblock %}

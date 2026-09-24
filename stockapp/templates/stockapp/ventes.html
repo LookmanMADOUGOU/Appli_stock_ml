@@ -1,5 +1,5 @@
 {% extends 'stockapp/base.html' %}
-{% block title %}Ventes & Marges — Gestion Stock IA{% endblock %}
+{% block title %}Journal Ventes & Marges — SMART-TECH{% endblock %}
 {% block page_title %}Ventes & Marges Financières{% endblock %}
 
 {% block content %}
@@ -148,7 +148,7 @@
             <th class="py-3 px-4 text-right">Prix Total</th>
             <th class="py-3 px-4 text-right text-emerald-600">Bénéfice</th>
             <th class="py-3 px-4">Date & Heure</th>
-            <th class="py-3 px-4 text-center">Reçu PDF</th>
+            <th class="py-3 px-4 text-center">Documents</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-sm">
@@ -162,9 +162,14 @@
             <td class="py-3 px-4 text-right font-bold font-mono text-emerald-600">+{{ vente.benefice_total }}</td>
             <td class="py-3 px-4 text-xs text-slate-500">{{ vente.date_vente|date:"d/m/Y H:i" }}</td>
             <td class="py-3 px-4 text-center">
-              <a href="{% url 'stockapp:vente-recu-pdf' pk=vente.pk %}" target="_blank" class="btn btn-secondary !py-1 !px-2 text-xs text-red-600 border-red-200 hover:bg-red-50 inline-flex items-center gap-1">
-                <i class="fas fa-file-pdf"></i> Reçu
-              </a>
+              <div class="inline-flex items-center gap-1.5">
+                <a href="{% url 'stockapp:vente-recu-pdf' pk=vente.pk %}" target="_blank" class="btn btn-secondary !py-1 !px-2 text-xs text-red-600 border-red-200 hover:bg-red-50 inline-flex items-center gap-1" title="Ticket de caisse">
+                  <i class="fas fa-receipt"></i> Reçu
+                </a>
+                <a href="{% url 'stockapp:vente-facture-pdf' pk=vente.pk %}" target="_blank" class="btn btn-secondary !py-1 !px-2 text-xs text-cyan-700 border-cyan-200 hover:bg-cyan-50 inline-flex items-center gap-1" title="Facture commerciale A4 officielle">
+                  <i class="fas fa-file-invoice"></i> Facture
+                </a>
+              </div>
             </td>
           </tr>
           {% empty %}

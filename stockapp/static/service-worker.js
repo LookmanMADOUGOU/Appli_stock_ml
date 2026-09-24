@@ -1,67 +1,98 @@
-const CACHE_NAME = 'stock-ia-v1';
-const ASSETS_TO_CACHE = [
+// SMART-TECH PWA Service Worker (Phase 10 - Expérience Mobile & Mode Hors-Ligne)
+const CACHE_NAME = 'smart-tech-v10';
+const OFFLINE_URL = '/offline/';
+
+const PRECACHE_ASSETS = [
   '/',
   '/dashboard/',
+  '/dashboard/caisse/',
+  '/offline/',
+  '/manifest.json',
   '/static/stockapp/css/theme.css',
   '/static/stockapp/js/ui.js',
-  '/static/manifest.json',
   '/static/stockapp/images/icon-192.jpg',
   '/static/stockapp/images/icon-512.jpg'
 ];
 
-// Install Event
+// 1. Installation du Service Worker & Pré-mise en cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('[SMART-TECH SW] Mise en cache des ressources critiques PWA');
+      return cache.addAll(PRECACHE_ASSETS);
     }).then(() => self.skipWaiting())
   );
 });
 
-// Activate Event
+// 2. Activation & Purge des anciens caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SMART-TECH SW] Nettoyage ancien cache :', key);
             return caches.delete(key);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('[SMART-TECH SW] Service Worker activé et opérationnel');
+      return self.clients.claim();
+    })
   );
 });
 
-// Fetch Event (Network First for navigation, Cache First for static assets)
+// 3. Stratégie de capture réseau & mode hors-ligne
 self.addEventListener('fetch', (event) => {
+  // Ignorer les requêtes non-GET (POST, PUT, DELETE...)
   if (event.request.method !== 'GET') return;
 
-  const request = event.request;
-  const isHtmlPage = request.mode === 'navigate' || (request.headers.get('accept') && request.headers.get('accept').includes('text/html'));
+  const url = new URL(event.request.url);
 
-  if (isHtmlPage) {
+  // Ignorer les appels admin Django ou endpoints API sensibles qui nécessitent une réponse live
+  if (url.pathname.startsWith('/admin/')) return;
+
+  const isHtmlNavigation = event.request.mode === 'navigate' ||
+    (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'));
+
+  if (isHtmlNavigation) {
+    // Stratégie "Network First" pour les pages de navigation
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          return response;
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
         })
-        .catch(() => caches.match(request).then((res) => res || caches.match('/dashboard/')))
+        .catch(async () => {
+          // Si le réseau échoue, chercher dans le cache
+          const cachedResponse = await caches.match(event.request);
+          if (cachedResponse) return cachedResponse;
+
+          // En dernier recours, afficher la page de secours hors-ligne
+          return caches.match(OFFLINE_URL);
+        })
     );
     return;
   }
 
+  // Stratégie "Cache First with Network Fallback" pour les assets statiques (CSS, JS, Fonts, Images)
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
-      return fetch(request).then((networkResponse) => {
+
+      return fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return networkResponse;
+      }).catch(() => {
+        // En cas d'erreur sur une image hors-ligne, on ne bloque pas
+        return null;
       });
     })
   );
