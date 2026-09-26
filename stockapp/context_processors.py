@@ -42,3 +42,64 @@ def notifications_context(request):
         'critical_notifications_count': 0,
         'recent_notifications': [],
     }
+
+
+def user_role_context(request):
+    """
+    Context processor injectant les données de rôle, de profil et de permissions
+    dans l'ensemble des templates SMART-TECH.
+    Permet à la barre latérale et au topbar de s'adapter dynamiquement
+    au profil précis de l'utilisateur connecté.
+    """
+    from stockapp.permissions import (
+        get_user_primary_role,
+        get_user_role_code,
+        get_user_home_url,
+        ROLES_CONFIG,
+        ROLE_ADMIN,
+        ROLE_MANAGER,
+        ROLE_MAGASINIER,
+        ROLE_CAISSIER,
+    )
+
+    user = getattr(request, 'user', None)
+    if user and user.is_authenticated:
+        role_code = get_user_role_code(user)
+        role_label = get_user_primary_role(user)
+        config = ROLES_CONFIG.get(role_code, {})
+        is_admin = (role_code == ROLE_ADMIN)
+
+        return {
+            'user_role_code': role_code,
+            'user_role_label': role_label,
+            'user_role_config': config,
+            'user_home_url': get_user_home_url(user),
+
+            # Drapeaux d'autorisation pour les modules
+            'is_role_admin': is_admin,
+            'is_role_manager': is_admin or (role_code == ROLE_MANAGER),
+            'is_role_magasinier': is_admin or (role_code == ROLE_MAGASINIER),
+            'is_role_caissier': is_admin or (role_code == ROLE_CAISSIER),
+
+            # Drapeaux stricts de profil
+            'strictly_admin': is_admin,
+            'strictly_manager': (role_code == ROLE_MANAGER),
+            'strictly_magasinier': (role_code == ROLE_MAGASINIER),
+            'strictly_caissier': (role_code == ROLE_CAISSIER),
+        }
+
+    return {
+        'user_role_code': 'Guest',
+        'user_role_label': 'Invité',
+        'user_role_config': {},
+        'user_home_url': '/login/',
+        'is_role_admin': False,
+        'is_role_manager': False,
+        'is_role_magasinier': False,
+        'is_role_caissier': False,
+        'strictly_admin': False,
+        'strictly_manager': False,
+        'strictly_magasinier': False,
+        'strictly_caissier': False,
+    }
+

@@ -20,10 +20,12 @@ from django.urls import reverse
 from django.utils import timezone
 from django.db import models, transaction
 
+from django.contrib.auth.models import User, Group
+
 from .forms import (
     ProduitForm, CategorieForm, VenteForm, ApprovisionnementForm,
     AjustementStockForm, ClientForm, FournisseurForm, ReglerDetteFournisseurForm, DepenseForm,
-    ClotureCaisseForm
+    ClotureCaisseForm, UtilisateurCreateForm, UtilisateurUpdateForm, UtilisateurPasswordResetForm
 )
 from .models import AlerteRupture, Approvisionnement, Categorie, Produit, Vente, MouvementStock, Client, Fournisseur, Depense, JournalAudit, ClotureCaisse, Notification
 from .selectors import (
@@ -32,7 +34,11 @@ from .selectors import (
     get_caisse_session_summary, get_clotures_caisse_metrics, get_comptabilite_export_data,
     get_notifications_metrics
 )
-from .permissions import role_required, user_has_role, get_user_primary_role
+from .permissions import (
+    role_required, user_has_role, get_user_primary_role, get_user_role_code,
+    get_user_home_url, assign_user_role, ROLES_CONFIG, ROLES_CHOICES,
+    ROLE_ADMIN, ROLE_MANAGER, ROLE_MAGASINIER, ROLE_CAISSIER
+)
 from .services.alert_service import creer_alerte_si_necessaire, resoudre_alerte_si_necessaire, generer_et_envoyer_resume_journalier
 from .services.prediction_service import get_product_time_series_data, calculate_reorder_point_and_safety_stock
 from .services.purchase_order_service import generate_purchase_order_data, generate_purchase_order_pdf, convert_order_data_to_approvisionnements
@@ -62,8 +68,17 @@ def dashboard(request):
     """
     Tableau de bord exécutif moderne et complet (Phase 5).
     Affiche le CA, bénéfice net, créances, dettes, alertes, valeur du stock et graphiques.
-    Optimisé à 100% via des requêtes d'agrégation SQL pures dans get_dashboard_metrics().
+    Redirection automatique :
+    - Un Caissier est orienté directement vers la Caisse POS
+    - Un Magasinier est orienté directement vers la gestion du Stock
+    - L'Administrateur et le Manager accèdent au pilotage exécutif
     """
+    role_code = get_user_role_code(request.user)
+    if role_code == ROLE_CAISSIER:
+        return redirect('stockapp:caisse-pos')
+    elif role_code == ROLE_MAGASINIER:
+        return redirect('stockapp:stock-inventaire')
+
     metrics = get_dashboard_metrics()
 
     return render(request, 'stockapp/dashboard.html', {
@@ -78,6 +93,7 @@ def dashboard(request):
 
 
 @login_required
+@role_required('Admin', 'Manager')
 def analytics_view(request):
     """
     Module Analytics Avancé & Performance Financière (Phase 6).
@@ -112,6 +128,7 @@ def analytics_view(request):
 # ==================== PRODUITS ====================
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def produits(request):
     query = request.GET.get('q')
     categorie_id = request.GET.get('categorie')
@@ -133,7 +150,7 @@ def produits(request):
 
 
 @login_required
-@role_required('Admin', 'Manager')
+@role_required('Admin', 'Magasinier', 'Manager')
 def produit_ajouter(request):
     if request.method == 'POST':
         form = ProduitForm(request.POST)
@@ -159,7 +176,7 @@ def produit_ajouter(request):
 
 
 @login_required
-@role_required('Admin', 'Manager')
+@role_required('Admin', 'Magasinier', 'Manager')
 def produit_modifier(request, pk):
     produit = get_object_or_404(Produit, pk=pk)
     ancien_prix = produit.prix_unitaire
@@ -218,6 +235,7 @@ def produit_supprimer(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def stock_inventaire(request):
 
     """
@@ -313,6 +331,7 @@ def ajuster_stock_view(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def mouvements_list_view(request):
     """Consulter l'historique complet et détaillé des mouvements de stock (Audit Trail)."""
     type_mouvement = request.GET.get('type')
@@ -341,6 +360,7 @@ def mouvements_list_view(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def categories(request):
     if request.method == 'POST':
         form = CategorieForm(request.POST)
@@ -361,6 +381,7 @@ def categories(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def categorie_modifier(request, pk):
     cat = get_object_or_404(Categorie, pk=pk)
     if request.method == 'POST':
@@ -375,6 +396,7 @@ def categorie_modifier(request, pk):
 
 
 @login_required
+@role_required('Admin')
 def categorie_supprimer(request, pk):
     if request.method == 'POST':
         cat = get_object_or_404(Categorie, pk=pk)
@@ -387,6 +409,7 @@ def categorie_supprimer(request, pk):
 # ==================== VENTES & BILAN ====================
 
 @login_required
+@role_required('Admin', 'Caissier', 'Manager')
 def ventes(request):
     periode = request.GET.get('periode', 'jour')
     date_str = request.GET.get('date')
@@ -542,6 +565,7 @@ def vente_supprimer(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Caissier')
 def caisse_pos(request):
     """
     Interface de caisse enregistreuse POS moderne et interactive (Étape 3).
@@ -676,6 +700,7 @@ def caisse_pos(request):
 
 
 @login_required
+@role_required('Admin', 'Caissier', 'Manager')
 def clients_list_view(request):
     """Gestion des fiches Clients."""
     if request.method == 'POST':
@@ -706,6 +731,7 @@ def clients_list_view(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def fournisseurs_list_view(request):
     """Gestion et répertoire des fiches Fournisseurs partenaires."""
     if request.method == 'POST':
@@ -743,6 +769,7 @@ def fournisseurs_list_view(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def fournisseur_detail_view(request, pk):
     """Fiche détaillée d'un fournisseur avec historique de ses livraisons."""
     fournisseur = get_object_or_404(Fournisseur, pk=pk)
@@ -798,6 +825,7 @@ def fournisseur_regler_dette_view(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Caissier', 'Manager')
 def telecharger_recu_pdf(request, pk):
     """
     Génération du Ticket / Facture de Caisse PDF professionnel SMART-TECH.
@@ -877,6 +905,7 @@ def telecharger_recu_pdf(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Caissier', 'Manager')
 def telecharger_facture_pdf(request, pk):
     """
     Génération d'une Facture Commerciale PDF A4 officielle SMART-TECH (Section 11).
@@ -1011,6 +1040,7 @@ def telecharger_facture_pdf(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Manager')
 def previsions_decision_view(request):
     """
     Module de Prévisions IA & Aide à la Décision (Phase 8 - Intelligence Commerciale).
@@ -1063,6 +1093,7 @@ def previsions_decision_view(request):
 
 
 @login_required
+@role_required('Admin', 'Manager')
 def produit_prevision_chart_api(request, pk):
     """
     Endpoint JSON retournant les séries temporelles passées et projections futures
@@ -1074,6 +1105,7 @@ def produit_prevision_chart_api(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Manager')
 def previsions_decision_pdf(request):
     """
     Génération du rapport exécutif d'aide à la décision & prévisions de réapprovisionnement (Phase 8).
@@ -1183,6 +1215,7 @@ def previsions_decision_pdf(request):
 # ==================== APPROVISIONNEMENTS ====================
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def approvisionnements(request):
     """
     Gestion des Approvisionnements et Réceptions de marchandises SMART-TECH.
@@ -1286,6 +1319,7 @@ def approvisionnement_supprimer(request, pk):
 # ==================== BON DE COMMANDE IA & NOTIFICATIONS ====================
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def bon_de_commande(request):
     """Centre de génération du Bon de Commande Fournisseur basé sur l'IA."""
     order_data = generate_purchase_order_data()
@@ -1297,6 +1331,7 @@ def bon_de_commande(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def bon_de_commande_pdf(request):
     """Téléchargement du Bon de Commande Officiel PDF SMART-TECH."""
     order_data = generate_purchase_order_data()
@@ -1308,6 +1343,7 @@ def bon_de_commande_pdf(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def bon_de_commande_valider(request):
     """Conversion en 1 clic du Bon de Commande IA en vrais approvisionnements."""
     if request.method == 'POST':
@@ -1332,6 +1368,7 @@ def bon_de_commande_valider(request):
 
 
 @login_required
+@role_required('Admin', 'Manager')
 def envoyer_resume_journalier_view(request):
     if request.method == 'POST':
         res = generer_et_envoyer_resume_journalier()
@@ -1406,6 +1443,7 @@ def info(request):
 
 
 @login_required
+@role_required('Admin', 'Magasinier', 'Manager')
 def export_report_pdf(request):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -1489,6 +1527,7 @@ def export_report_pdf(request):
 # ==================== MODULE FINANCIER & TRÉSORERIE (PHASE 7) ====================
 
 @login_required
+@role_required('Admin', 'Manager')
 def finances_view(request):
     """
     Centre Financier & Pilotage de Trésorerie (Phase 7).
@@ -1657,7 +1696,7 @@ def finance_report_pdf(request):
 # ==================== JOURNAL D'AUDIT EXÉCUTIF (PHASE 9) ====================
 
 @login_required
-@role_required('Admin', 'Manager')
+@role_required('Admin')
 def journal_audit_view(request):
     """
     Journal d'Audit Centralisé SMART-TECH (Phase 9 - Rôles, Permissions & Audit).
@@ -1700,7 +1739,7 @@ def journal_audit_view(request):
 
 
 @login_required
-@role_required('Admin', 'Manager')
+@role_required('Admin')
 def journal_audit_export_csv(request):
     """
     Export CSV sécurisé du Journal d'Audit SMART-TECH.
@@ -1747,6 +1786,7 @@ def journal_audit_export_csv(request):
 # ==================== CLÔTURES DE CAISSE & RAPPORTS Z (PHASE 11) ====================
 
 @login_required
+@role_required('Admin', 'Manager', 'Caissier')
 def clotures_caisse_list_view(request):
     """
     Historique et consultation des Clôtures de Caisse (Rapports Z).
@@ -1883,6 +1923,7 @@ def cloture_caisse_view(request):
 
 
 @login_required
+@role_required('Admin', 'Manager', 'Caissier')
 def cloture_caisse_detail_view(request, pk):
     """
     Fiche détaillée d'un Rapport Z de Clôture de Caisse.
@@ -1897,6 +1938,7 @@ def cloture_caisse_detail_view(request, pk):
 
 
 @login_required
+@role_required('Admin', 'Manager', 'Caissier')
 def cloture_caisse_pdf_view(request, pk):
     """
     Génération du document officiel Rapport Z de Clôture de Caisse en PDF A4.
@@ -2058,6 +2100,7 @@ def cloture_caisse_pdf_view(request, pk):
 # ==================== HUB DES RAPPORTS & EXPORTS AVANCÉS (PHASE 11) ====================
 
 @login_required
+@role_required('Admin', 'Manager')
 def rapports_hub_view(request):
     """
     Hub centralisé des rapports d'activité, exports comptables et clôtures Z (Phase 11).
@@ -2493,5 +2536,304 @@ def purger_logs_audit_view(request):
         messages.success(request, f"Purge effectuée : {nb} log(s) d'audit de plus de {jours} jours supprimé(s).")
 
     return redirect('stockapp:sauvegardes')
+
+
+# ==================== MODULE GESTION DES UTILISATEURS & PROFILS (RBAC) ====================
+
+@login_required
+@role_required('Admin')
+def utilisateurs_list_view(request):
+    """
+    Console d'administration centrale des comptes utilisateurs et profils SMART-TECH.
+    Permet à l'Administrateur de superviser, filtrer, créer, modifier, réinitialiser
+    les mots de passe, activer/désactiver et supprimer des comptes.
+    """
+    search_query = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', '').strip()
+    statut_filter = request.GET.get('statut', '').strip()
+
+    # S'assurer que les 4 groupes de rôles existent
+    for r in [ROLE_ADMIN, ROLE_MANAGER, ROLE_MAGASINIER, ROLE_CAISSIER]:
+        Group.objects.get_or_create(name=r)
+
+    users_qs = User.objects.prefetch_related('groups').order_by('-date_joined')
+
+    # Filtrage par recherche
+    if search_query:
+        users_qs = users_qs.filter(
+            models.Q(username__icontains=search_query) |
+            models.Q(first_name__icontains=search_query) |
+            models.Q(last_name__icontains=search_query) |
+            models.Q(email__icontains=search_query)
+        )
+
+    # Filtrage par statut
+    if statut_filter == 'actif':
+        users_qs = users_qs.filter(is_active=True)
+    elif statut_filter == 'inactif':
+        users_qs = users_qs.filter(is_active=False)
+
+    all_users = list(users_qs)
+    enriched_users = []
+    nb_admins = 0
+    nb_managers = 0
+    nb_magasiniers = 0
+    nb_caissiers = 0
+    nb_actifs = 0
+
+    for u in all_users:
+        code = get_user_role_code(u)
+        label = get_user_primary_role(u)
+        conf = ROLES_CONFIG.get(code, ROLES_CONFIG[ROLE_ADMIN])
+
+        # Compteurs globaux
+        if code == ROLE_ADMIN:
+            nb_admins += 1
+        elif code == ROLE_MANAGER:
+            nb_managers += 1
+        elif code == ROLE_MAGASINIER:
+            nb_magasiniers += 1
+        elif code == ROLE_CAISSIER:
+            nb_caissiers += 1
+
+        if u.is_active:
+            nb_actifs += 1
+
+        # Filtre de rôle
+        if role_filter and code != role_filter:
+            continue
+
+        enriched_users.append({
+            'user': u,
+            'role_code': code,
+            'role_label': label,
+            'role_config': conf,
+            'is_current_user': (u.id == request.user.id),
+        })
+
+    create_form = UtilisateurCreateForm()
+
+    return render(request, 'stockapp/utilisateurs.html', {
+        'utilisateurs': enriched_users,
+        'total_count': len(all_users),
+        'nb_admins': nb_admins,
+        'nb_managers': nb_managers,
+        'nb_magasiniers': nb_magasiniers,
+        'nb_caissiers': nb_caissiers,
+        'nb_actifs': nb_actifs,
+        'selected_search': search_query,
+        'selected_role': role_filter,
+        'selected_statut': statut_filter,
+        'roles_choices': ROLES_CHOICES,
+        'roles_config': ROLES_CONFIG,
+        'create_form': create_form,
+    })
+
+
+@login_required
+@role_required('Admin')
+def utilisateur_creer_view(request):
+    """
+    Création d'un nouveau compte utilisateur avec attribution immédiate de rôle.
+    """
+    if request.method == 'POST':
+        form = UtilisateurCreateForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            role = form.cleaned_data['role']
+            password = form.cleaned_data['password']
+            is_active = form.cleaned_data['is_active']
+
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                is_active=is_active
+            )
+            assign_user_role(user, role)
+
+            role_label = ROLES_CONFIG.get(role, {}).get('label', role)
+            JournalAudit.log_action(
+                utilisateur=request.user,
+                action='CREATION',
+                module='SECURITE',
+                objet_concerne=f"Utilisateur @{username}",
+                description=(
+                    f"Création du compte '{username}' ({user.get_full_name() or username}) "
+                    f"avec le profil {role_label} par l'administrateur {request.user.username}."
+                ),
+                request=request
+            )
+            messages.success(request, f"Le compte utilisateur '{username}' ({role_label}) a été créé avec succès.")
+            return redirect('stockapp:utilisateurs-list')
+        else:
+            first_error = next(iter(form.errors.values()))[0] if form.errors else "Erreur de validation"
+            messages.error(request, f"Impossible de créer l'utilisateur : {first_error}")
+
+    return redirect('stockapp:utilisateurs-list')
+
+
+@login_required
+@role_required('Admin')
+def utilisateur_modifier_view(request, pk):
+    """
+    Modification d'un utilisateur existant (Informations personnelles, profil/rôle, statut).
+    """
+    target_user = get_object_or_404(User, pk=pk)
+
+    if request.method == 'POST':
+        form = UtilisateurUpdateForm(request.POST)
+        if form.is_valid():
+            new_first_name = form.cleaned_data['first_name']
+            new_last_name = form.cleaned_data['last_name']
+            new_email = form.cleaned_data['email']
+            new_role = form.cleaned_data['role']
+            new_active = form.cleaned_data['is_active']
+
+            # Garde-fou : Un administrateur ne peut pas se rétrograder ou se désactiver lui-même
+            if target_user.id == request.user.id:
+                if new_role != ROLE_ADMIN or not new_active:
+                    messages.warning(
+                        request,
+                        "Sécurité : Vous ne pouvez pas modifier votre propre statut administrateur actif."
+                    )
+                    return redirect('stockapp:utilisateurs-list')
+
+            ancien_role = get_user_primary_role(target_user)
+            target_user.first_name = new_first_name
+            target_user.last_name = new_last_name
+            target_user.email = new_email
+            target_user.is_active = new_active
+            target_user.save()
+
+            assign_user_role(target_user, new_role)
+            nouveau_role = ROLES_CONFIG.get(new_role, {}).get('label', new_role)
+
+            JournalAudit.log_action(
+                utilisateur=request.user,
+                action='MODIFICATION',
+                module='SECURITE',
+                objet_concerne=f"Utilisateur @{target_user.username}",
+                description=(
+                    f"Mise à jour du profil de @{target_user.username} : Rôle '{ancien_role}' -> '{nouveau_role}', "
+                    f"Statut {'Actif' if new_active else 'Désactivé'}."
+                ),
+                request=request
+            )
+            messages.success(request, f"Le profil de l'utilisateur '{target_user.username}' a été mis à jour.")
+        else:
+            first_error = next(iter(form.errors.values()))[0] if form.errors else "Erreur de validation"
+            messages.error(request, f"Erreur de modification : {first_error}")
+
+    return redirect('stockapp:utilisateurs-list')
+
+
+@login_required
+@role_required('Admin')
+def utilisateur_reinitialiser_mdp_view(request, pk):
+    """
+    Réinitialisation administrative du mot de passe d'un utilisateur.
+    """
+    target_user = get_object_or_404(User, pk=pk)
+
+    if request.method == 'POST':
+        form = UtilisateurPasswordResetForm(request.POST)
+        if form.is_valid():
+            new_pass = form.cleaned_data['new_password']
+            target_user.set_password(new_pass)
+            target_user.save()
+
+            JournalAudit.log_action(
+                utilisateur=request.user,
+                action='MODIFICATION',
+                module='SECURITE',
+                objet_concerne=f"Utilisateur @{target_user.username}",
+                description=f"Réinitialisation administrative du mot de passe de @{target_user.username} par {request.user.username}.",
+                request=request
+            )
+            messages.success(
+                request,
+                f"Le mot de passe de l'utilisateur '{target_user.username}' a été réinitialisé avec succès."
+            )
+        else:
+            first_error = next(iter(form.errors.values()))[0] if form.errors else "Erreur"
+            messages.error(request, f"Échec de réinitialisation du mot de passe : {first_error}")
+
+    return redirect('stockapp:utilisateurs-list')
+
+
+@login_required
+@role_required('Admin')
+def utilisateur_basculer_statut_view(request, pk):
+    """
+    Active ou désactive un compte utilisateur en 1 clic (sans effacer son historique).
+    """
+    target_user = get_object_or_404(User, pk=pk)
+
+    if target_user.id == request.user.id:
+        messages.warning(request, "Sécurité : Vous ne pouvez pas désactiver votre propre compte actif.")
+        return redirect('stockapp:utilisateurs-list')
+
+    if request.method == 'POST':
+        target_user.is_active = not target_user.is_active
+        target_user.save(update_fields=['is_active'])
+
+        etat = "activé" if target_user.is_active else "suspendu / désactivé"
+        JournalAudit.log_action(
+            utilisateur=request.user,
+            action='MODIFICATION',
+            module='SECURITE',
+            objet_concerne=f"Utilisateur @{target_user.username}",
+            description=f"Compte de @{target_user.username} {etat} par l'administrateur {request.user.username}.",
+            request=request
+        )
+        messages.success(request, f"Le compte '{target_user.username}' a été {etat}.")
+
+    return redirect('stockapp:utilisateurs-list')
+
+
+@login_required
+@role_required('Admin')
+def utilisateur_supprimer_view(request, pk):
+    """
+    Suppression définitive et sécurisée d'un compte utilisateur.
+    Permet à l'administrateur de purger ou de recréer un profil.
+    """
+    target_user = get_object_or_404(User, pk=pk)
+
+    # Garde-fou 1 : Pas d'auto-suppression
+    if target_user.id == request.user.id:
+        messages.error(request, "Action interdite : Vous ne pouvez pas supprimer votre propre compte actuellement connecté.")
+        return redirect('stockapp:utilisateurs-list')
+
+    # Garde-fou 2 : Empêcher la suppression du dernier administrateur
+    if target_user.is_superuser or target_user.groups.filter(name=ROLE_ADMIN).exists():
+        admin_count = User.objects.filter(models.Q(is_superuser=True) | models.Q(groups__name=ROLE_ADMIN)).distinct().count()
+        if admin_count <= 1:
+            messages.error(request, "Action interdite : Impossible de supprimer l'unique administrateur restant du système.")
+            return redirect('stockapp:utilisateurs-list')
+
+    if request.method == 'POST':
+        uname = target_user.username
+        role_label = get_user_primary_role(target_user)
+        target_user.delete()
+
+        JournalAudit.log_action(
+            utilisateur=request.user,
+            action='SUPPRESSION',
+            module='SECURITE',
+            objet_concerne=f"Utilisateur @{uname}",
+            description=f"Suppression définitive du compte @{uname} (Profil: {role_label}) par {request.user.username}.",
+            request=request
+        )
+        messages.success(request, f"L'utilisateur '{uname}' a été supprimé définitivement. Vous pouvez recréer un profil si souhaité.")
+
+    return redirect('stockapp:utilisateurs-list')
+
 
 

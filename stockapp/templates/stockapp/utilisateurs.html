@@ -1,0 +1,567 @@
+{% extends 'stockapp/base.html' %}
+
+{% block page_title %}Gestion des Profils & Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- En-tête & Action Principale -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-600/20">
+        <i class="fas fa-users-cog text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800">Gestion des Profils & Contrôle d'Accès RBAC</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Administration exclusive des 4 profils métier : Caissier, Magasinier, Manager et Administrateur</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button onclick="ouvrirModalCreation()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20">
+        <i class="fas fa-user-plus"></i> Créer un Utilisateur
+      </button>
+    </div>
+  </div>
+
+  <!-- Cartes KPI de répartition des effectifs par Profil -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <!-- Total -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Comptes</span>
+        <span class="p-1.5 rounded-lg bg-slate-100 text-slate-600"><i class="fas fa-users text-xs"></i></span>
+      </div>
+      <div class="mt-2 text-2xl font-black text-slate-800">{{ total_count }}</div>
+      <div class="mt-1 text-[11px] text-emerald-600 font-semibold">{{ nb_actifs }} actif{{ nb_actifs|pluralize }}</div>
+    </div>
+
+    <!-- Admin -->
+    <div class="bg-white p-4 rounded-2xl border border-purple-200/80 shadow-sm bg-purple-50/20">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700">Administrateurs</span>
+        <span class="p-1.5 rounded-lg bg-purple-100 text-purple-700"><i class="fas fa-user-shield text-xs"></i></span>
+      </div>
+      <div class="mt-2 text-2xl font-black text-purple-900">{{ nb_admins }}</div>
+      <div class="mt-1 text-[10px] text-purple-600 font-medium truncate">Sécurité & Sauvegardes</div>
+    </div>
+
+    <!-- Manager -->
+    <div class="bg-white p-4 rounded-2xl border border-cyan-200/80 shadow-sm bg-cyan-50/20">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700">Managers</span>
+        <span class="p-1.5 rounded-lg bg-cyan-100 text-cyan-700"><i class="fas fa-user-tie text-xs"></i></span>
+      </div>
+      <div class="mt-2 text-2xl font-black text-cyan-900">{{ nb_managers }}</div>
+      <div class="mt-1 text-[10px] text-cyan-600 font-medium truncate">Finances & Décision ML</div>
+    </div>
+
+    <!-- Magasinier -->
+    <div class="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-sm bg-amber-50/20">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Magasiniers</span>
+        <span class="p-1.5 rounded-lg bg-amber-100 text-amber-700"><i class="fas fa-boxes text-xs"></i></span>
+      </div>
+      <div class="mt-2 text-2xl font-black text-amber-900">{{ nb_magasiniers }}</div>
+      <div class="mt-1 text-[10px] text-amber-600 font-medium truncate">Stock & Approvisionnement</div>
+    </div>
+
+    <!-- Caissier -->
+    <div class="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-sm bg-emerald-50/20">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Caissiers</span>
+        <span class="p-1.5 rounded-lg bg-emerald-100 text-emerald-700"><i class="fas fa-cash-register text-xs"></i></span>
+      </div>
+      <div class="mt-2 text-2xl font-black text-emerald-900">{{ nb_caissiers }}</div>
+      <div class="mt-1 text-[10px] text-emerald-600 font-medium truncate">Point de Vente & POS</div>
+    </div>
+  </div>
+
+  <!-- Barre de Filtres et Recherche -->
+  <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+      <a href="{% url 'stockapp:utilisateurs-list' %}" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {% if not selected_role and not selected_statut %}bg-slate-800 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+        Tous ({{ total_count }})
+      </a>
+      <a href="{% url 'stockapp:utilisateurs-list' %}?role=Admin" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {% if selected_role == 'Admin' %}bg-purple-600 text-white{% else %}bg-purple-50 text-purple-700 hover:bg-purple-100{% endif %}">
+        👑 Admins ({{ nb_admins }})
+      </a>
+      <a href="{% url 'stockapp:utilisateurs-list' %}?role=Manager" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {% if selected_role == 'Manager' %}bg-cyan-600 text-white{% else %}bg-cyan-50 text-cyan-700 hover:bg-cyan-100{% endif %}">
+        💼 Managers ({{ nb_managers }})
+      </a>
+      <a href="{% url 'stockapp:utilisateurs-list' %}?role=Magasinier" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {% if selected_role == 'Magasinier' %}bg-amber-600 text-white{% else %}bg-amber-50 text-amber-700 hover:bg-amber-100{% endif %}">
+        📦 Magasiniers ({{ nb_magasiniers }})
+      </a>
+      <a href="{% url 'stockapp:utilisateurs-list' %}?role=Caissier" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {% if selected_role == 'Caissier' %}bg-emerald-600 text-white{% else %}bg-emerald-50 text-emerald-700 hover:bg-emerald-100{% endif %}">
+        ⚡ Caissiers ({{ nb_caissiers }})
+      </a>
+    </div>
+
+    <!-- Recherche texte -->
+    <form method="get" action="{% url 'stockapp:utilisateurs-list' %}" class="relative w-full md:w-72">
+      {% if selected_role %}<input type="hidden" name="role" value="{{ selected_role }}">{% endif %}
+      <input type="search" name="q" value="{{ selected_search }}" placeholder="Rechercher nom, @id, email..." class="w-full h-9 pl-9 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    </form>
+  </div>
+
+  <!-- Tableau des Utilisateurs -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="px-6 py-4">Utilisateur / Profil</th>
+            <th class="px-6 py-4">Email</th>
+            <th class="px-6 py-4">Rôle Attribué</th>
+            <th class="px-6 py-4">Périmètre d'Accès</th>
+            <th class="px-6 py-4 text-center">Statut</th>
+            <th class="px-6 py-4">Dernière Connexion</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+          {% for item in utilisateurs %}
+            <tr class="hover:bg-slate-50/80 transition-colors {% if item.is_current_user %}bg-indigo-50/20{% endif %}">
+              <!-- Avatar & Nom -->
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm
+                    {% if item.role_code == 'Admin' %}bg-purple-600 text-white
+                    {% elif item.role_code == 'Manager' %}bg-cyan-600 text-white
+                    {% elif item.role_code == 'Magasinier' %}bg-amber-600 text-white
+                    {% else %}bg-emerald-600 text-white{% endif %}">
+                    {{ item.user.username|slice:":2"|upper }}
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-slate-900 text-sm">
+                        {% if item.user.get_full_name %}{{ item.user.get_full_name }}{% else %}{{ item.user.username }}{% endif %}
+                      </span>
+                      {% if item.is_current_user %}
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-indigo-100 text-indigo-700">VOUS</span>
+                      {% endif %}
+                    </div>
+                    <div class="text-[11px] text-slate-400">@{{ item.user.username }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Email -->
+              <td class="px-6 py-4 text-slate-600">
+                {% if item.user.email %}
+                  <span>{{ item.user.email }}</span>
+                {% else %}
+                  <span class="text-slate-400 italic">Non renseigné</span>
+                {% endif %}
+              </td>
+
+              <!-- Rôle Badge -->
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border {{ item.role_config.badge_class }}">
+                  <i class="fas {{ item.role_config.icon }}"></i>
+                  <span>{{ item.role_label }}</span>
+                </span>
+              </td>
+
+              <!-- Périmètre d'Accès -->
+              <td class="px-6 py-4 max-w-xs">
+                <p class="text-[11px] text-slate-500 line-clamp-2" title="{{ item.role_config.scope }}">
+                  {{ item.role_config.scope }}
+                </p>
+              </td>
+
+              <!-- Statut -->
+              <td class="px-6 py-4 text-center">
+                {% if item.user.is_active %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Actif
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span> Suspendu
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Date Connexion -->
+              <td class="px-6 py-4 text-slate-500 text-[11px]">
+                {% if item.user.last_login %}
+                  <div>{{ item.user.last_login|date:"d/m/Y H:i" }}</div>
+                {% else %}
+                  <span class="text-slate-400 italic">Jamais connecté</span>
+                {% endif %}
+                <div class="text-[10px] text-slate-400">Créé le {{ item.user.date_joined|date:"d/m/Y" }}</div>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <!-- Modifier -->
+                  <button type="button"
+                    onclick="ouvrirModalModification('{{ item.user.id }}', '{{ item.user.username|escapejs }}', '{{ item.user.first_name|escapejs }}', '{{ item.user.last_name|escapejs }}', '{{ item.user.email|escapejs }}', '{{ item.role_code }}', {{ item.user.is_active|lower }}, {{ item.is_current_user|lower }})"
+                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                    title="Modifier les informations et le rôle">
+                    <i class="fas fa-edit"></i>
+                  </button>
+
+                  <!-- Réinitialiser mot de passe -->
+                  <button type="button"
+                    onclick="ouvrirModalResetMdp('{{ item.user.id }}', '{{ item.user.username|escapejs }}')"
+                    class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                    title="Réinitialiser le mot de passe">
+                    <i class="fas fa-key"></i>
+                  </button>
+
+                  <!-- Basculer Actif / Inactif -->
+                  {% if not item.is_current_user %}
+                    <form action="{% url 'stockapp:utilisateur-basculer-statut' item.user.id %}" method="post" class="inline">
+                      {% csrf_token %}
+                      <button type="submit"
+                        class="p-1.5 rounded-lg {% if item.user.is_active %}bg-rose-50 hover:bg-rose-100 text-rose-600{% else %}bg-emerald-50 hover:bg-emerald-100 text-emerald-600{% endif %} transition-colors"
+                        title="{% if item.user.is_active %}Suspendre l'accès{% else %}Réactiver le compte{% endif %}">
+                        <i class="fas {% if item.user.is_active %}fa-user-slash{% else %}fa-user-check{% endif %}"></i>
+                      </button>
+                    </form>
+
+                    <!-- Supprimer -->
+                    <button type="button"
+                      onclick="ouvrirModalSuppression('{{ item.user.id }}', '{{ item.user.username|escapejs }}', '{{ item.role_label|escapejs }}')"
+                      class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
+                      title="Supprimer définitivement">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                <i class="fas fa-users text-3xl mb-2 text-slate-300"></i>
+                <p class="font-bold">Aucun utilisateur trouvé</p>
+                <p class="text-xs">Modifiez vos critères de recherche ou créez un nouveau compte.</p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ==================== MODAL DE CRÉATION D'UTILISATEUR ==================== -->
+<div id="modal-creation" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-600/20">
+          <i class="fas fa-user-plus text-base"></i>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Créer un Nouveau Compte Profil</h2>
+          <p class="text-xs text-slate-500">Attribuez un rôle précis pour délimiter les accès au système</p>
+        </div>
+      </div>
+      <button onclick="fermerModalCreation()" class="text-slate-400 hover:text-slate-600 p-2"><i class="fas fa-times"></i></button>
+    </div>
+
+    <form action="{% url 'stockapp:utilisateur-creer' %}" method="post" class="p-6 overflow-y-auto space-y-4">
+      {% csrf_token %}
+
+      <!-- Sélection interactive du rôle -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Choisir le Profil Métier *</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Caissier -->
+          <label class="relative flex flex-col p-3 rounded-2xl border-2 cursor-pointer transition-all hover:border-emerald-500 border-slate-200 bg-white has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/30">
+            <input type="radio" name="role" value="Caissier" class="sr-only" checked>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs"><i class="fas fa-cash-register"></i></span>
+              <span class="text-xs font-black text-slate-800">Caissier POS</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-snug">Point de vente tactile, encaissements, clôtures (Rapport Z), ventes & tickets.</p>
+          </label>
+
+          <!-- Magasinier -->
+          <label class="relative flex flex-col p-3 rounded-2xl border-2 cursor-pointer transition-all hover:border-amber-500 border-slate-200 bg-white has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/30">
+            <input type="radio" name="role" value="Magasinier" class="sr-only">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs"><i class="fas fa-boxes"></i></span>
+              <span class="text-xs font-black text-slate-800">Magasinier</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-snug">Gestion stock, inventaire, mouvements, produits, approvisionnements & bons IA.</p>
+          </label>
+
+          <!-- Manager -->
+          <label class="relative flex flex-col p-3 rounded-2xl border-2 cursor-pointer transition-all hover:border-cyan-500 border-slate-200 bg-white has-[:checked]:border-cyan-500 has-[:checked]:bg-cyan-50/30">
+            <input type="radio" name="role" value="Manager" class="sr-only">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-7 h-7 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs"><i class="fas fa-user-tie"></i></span>
+              <span class="text-xs font-black text-slate-800">Manager</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-snug">Dashboard exécutif, finances & dépenses, prédictions ML & rapports comptables.</p>
+          </label>
+
+          <!-- Administrateur -->
+          <label class="relative flex flex-col p-3 rounded-2xl border-2 cursor-pointer transition-all hover:border-purple-500 border-slate-200 bg-white has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/30">
+            <input type="radio" name="role" value="Admin" class="sr-only">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center text-xs"><i class="fas fa-user-shield"></i></span>
+              <span class="text-xs font-black text-slate-800">Administrateur</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-snug">Contrôle absolu sur toutes les pages, sécurité, utilisateurs & sauvegardes.</p>
+          </label>
+        </div>
+      </div>
+
+      <!-- Identifiant & Email -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Identifiant de connexion (@username) *</label>
+          <input type="text" name="username" required placeholder="ex: caissier_jean" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Adresse Email</label>
+          <input type="email" name="email" placeholder="employe@smarttech.bj" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Prénom & Nom -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Prénom</label>
+          <input type="text" name="first_name" placeholder="ex: Jean" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nom de famille</label>
+          <input type="text" name="last_name" placeholder="ex: KOFFI" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Mot de passe initial *</label>
+          <input type="password" name="password" required minlength="6" placeholder="Min. 6 caractères" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Confirmer mot de passe *</label>
+          <input type="password" name="password_confirm" required minlength="6" placeholder="Répéter mot de passe" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Statut actif -->
+      <div class="flex items-center gap-2 pt-2">
+        <input type="checkbox" name="is_active" id="id_create_is_active" checked class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+        <label for="id_create_is_active" class="text-xs font-bold text-slate-700 cursor-pointer">Activer ce compte immédiatement</label>
+      </div>
+
+      <!-- Boutons -->
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="fermerModalCreation()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors">
+          Annuler
+        </button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all">
+          Enregistrer le Profil & Créer Compte
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL DE MODIFICATION D'UTILISATEUR ==================== -->
+<div id="modal-modification" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center">
+          <i class="fas fa-user-edit text-base"></i>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Modifier l'Utilisateur</h2>
+          <p class="text-xs text-slate-500" id="mod-user-subtitle">Édition des informations et du rôle</p>
+        </div>
+      </div>
+      <button onclick="fermerModalModification()" class="text-slate-400 hover:text-slate-600 p-2"><i class="fas fa-times"></i></button>
+    </div>
+
+    <form id="form-modification" method="post" action="" class="p-6 space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Rôle & Profil d'accès</label>
+        <select name="role" id="mod-role-select" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <option value="Caissier">⚡ Caissier : Point de Vente & Caisse POS</option>
+          <option value="Magasinier">📦 Magasinier : Gestion du Stock & Approvisionnements</option>
+          <option value="Manager">💼 Manager : Pilotage, Finances & Intelligence ML</option>
+          <option value="Admin">👑 Administrateur : Sécurité, Rôles & Sauvegardes</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Prénom</label>
+          <input type="text" name="first_name" id="mod-firstname" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nom</label>
+          <input type="text" name="last_name" id="mod-lastname" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+        <input type="email" name="email" id="mod-email" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      </div>
+
+      <div class="flex items-center gap-2 pt-1" id="mod-active-container">
+        <input type="checkbox" name="is_active" id="mod-is-active" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+        <label for="mod-is-active" class="text-xs font-bold text-slate-700 cursor-pointer">Compte actif (autorisé à se connecter)</label>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="fermerModalModification()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors">
+          Annuler
+        </button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-md transition-all">
+          Enregistrer les modifications
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL DE RÉINITIALISATION MOT DE PASSE ==================== -->
+<div id="modal-reset-mdp" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-amber-50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-600/20">
+          <i class="fas fa-key text-base"></i>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Changer le Mot de Passe</h2>
+          <p class="text-xs text-slate-500" id="reset-user-subtitle">Définition directe d'un nouveau mot de passe</p>
+        </div>
+      </div>
+      <button onclick="fermerModalResetMdp()" class="text-slate-400 hover:text-slate-600 p-2"><i class="fas fa-times"></i></button>
+    </div>
+
+    <form id="form-reset-mdp" method="post" action="" class="p-6 space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Nouveau mot de passe *</label>
+        <input type="password" name="new_password" required minlength="6" placeholder="Min. 6 caractères" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Confirmer le nouveau mot de passe *</label>
+        <input type="password" name="new_password_confirm" required minlength="6" placeholder="Répéter le mot de passe" class="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="fermerModalResetMdp()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors">
+          Annuler
+        </button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition-all">
+          Mettre à Jour le Mot de Passe
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL DE CONFIRMATION DE SUPPRESSION ==================== -->
+<div id="modal-suppression" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-rose-200 overflow-hidden flex flex-col">
+    <div class="p-6 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-trash-alt text-2xl"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">Supprimer cet utilisateur ?</h3>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed" id="suppr-confirm-text">
+        Êtes-vous certain de vouloir supprimer définitivement ce compte ?
+      </p>
+      <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-left text-[11px] text-amber-800">
+        <i class="fas fa-info-circle mr-1 text-amber-600"></i>
+        <strong>Note :</strong> Les historiques comptables et ventes passées restent préservés. Vous pourrez recréer un compte ultérieurement.
+      </div>
+    </div>
+
+    <form id="form-suppression" method="post" action="" class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+      {% csrf_token %}
+      <button type="button" onclick="fermerModalSuppression()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-white transition-colors">
+        Annuler
+      </button>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all">
+        Confirmer la Suppression Définitive
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<!-- Script JavaScript pour les Modales Dynamiques -->
+<script>
+  function ouvrirModalCreation() {
+    document.getElementById('modal-creation').classList.remove('hidden');
+  }
+  function fermerModalCreation() {
+    document.getElementById('modal-creation').classList.add('hidden');
+  }
+
+  function ouvrirModalModification(userId, username, firstName, lastName, email, roleCode, isActive, isCurrentUser) {
+    const form = document.getElementById('form-modification');
+    form.action = `/dashboard/utilisateurs/${userId}/modifier/`;
+    document.getElementById('mod-user-subtitle').innerText = `@${username}`;
+    document.getElementById('mod-firstname').value = firstName;
+    document.getElementById('mod-lastname').value = lastName;
+    document.getElementById('mod-email').value = email;
+    document.getElementById('mod-role-select').value = roleCode;
+    document.getElementById('mod-is-active').checked = isActive;
+
+    const roleSelect = document.getElementById('mod-role-select');
+    const activeContainer = document.getElementById('mod-active-container');
+
+    if (isCurrentUser) {
+      roleSelect.disabled = true;
+      activeContainer.style.display = 'none';
+    } else {
+      roleSelect.disabled = false;
+      activeContainer.style.display = 'flex';
+    }
+
+    document.getElementById('modal-modification').classList.remove('hidden');
+  }
+  function fermerModalModification() {
+    document.getElementById('modal-modification').classList.add('hidden');
+  }
+
+  function ouvrirModalResetMdp(userId, username) {
+    const form = document.getElementById('form-reset-mdp');
+    form.action = `/dashboard/utilisateurs/${userId}/reinitialiser-mot-de-passe/`;
+    document.getElementById('reset-user-subtitle').innerText = `Compte @${username}`;
+    document.getElementById('modal-reset-mdp').classList.remove('hidden');
+  }
+  function fermerModalResetMdp() {
+    document.getElementById('modal-reset-mdp').classList.add('hidden');
+  }
+
+  function ouvrirModalSuppression(userId, username, roleLabel) {
+    const form = document.getElementById('form-suppression');
+    form.action = `/dashboard/utilisateurs/${userId}/supprimer/`;
+    document.getElementById('suppr-confirm-text').innerHTML =
+      `Voulez-vous supprimer définitivement le compte <strong>@${username}</strong> (${roleLabel}) ?`;
+    document.getElementById('modal-suppression').classList.remove('hidden');
+  }
+  function fermerModalSuppression() {
+    document.getElementById('modal-suppression').classList.add('hidden');
+  }
+</script>
+{% endblock %}

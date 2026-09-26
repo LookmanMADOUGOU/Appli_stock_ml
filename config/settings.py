@@ -62,6 +62,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'stockapp.context_processors.notifications_context',
+                'stockapp.context_processors.user_role_context',
             ],
         },
     },

@@ -118,15 +118,24 @@ Téléchargement en un clic de rapports sécurisés au format CSV / Excel :
 
 ## 5. Profil Administrateur : Sécurité, Rôles & Sauvegardes
 
-### 5.1 Rôles & Permissions
-SMART-TECH applique un contrôle d'accès strict basé sur le rôle principal de l'utilisateur :
-- **Admin** : Accès intégral, gestion des utilisateurs, journal d'audit et sauvegardes.
-- **Manager** : Pilotage stratégique, finances, rapports et aide à la décision.
-- **Magasinier** : Gestion opérationnelle du catalogue, des stocks et approvisionnements.
-- **Caissier** : Accès dédié au terminal POS et à la clôture de caisse.
+### 5.1 Gestion des Profils & Utilisateurs (`/dashboard/utilisateurs/`)
+Réservé exclusivement à l'**Administrateur**, ce centre de commande permet de gérer les accès en toute autonomie :
+- **Création indépendante de compte** : L'administrateur crée chaque profil avec ses identifiants (@username, nom, prénom, email, mot de passe initial) et lui assigne son profil métier parmi les 4 rôles disponibles.
+- **Isolation stricte des rôles** :
+  - **Caissier** : Uniquement Point de Vente & Caisse POS, Clôtures Z, Journal des ventes et Clients. Toute tentative d'accès à un autre module est immédiatement bloquée, journalisée dans l'audit et redirigée vers la Caisse POS.
+  - **Magasinier** : Uniquement Stock, Inventaires, Produits, Mouvements, Catégories, Approvisionnements et Bons de commande IA. Toute tentative d'accès cross-profil est bloquée et redirigée vers le Stock.
+  - **Manager** : Pilotage exécutif, Finances, Trésorerie, Analytics, Prévisions ML et Rapports comptables. L'accès aux outils de sécurité, sauvegardes et gestion des profils lui est strictement interdit.
+  - **Administrateur** : Accès universel et absolu à **100% des modules, pages et actions du système**.
+- **Modification & Réattribution de rôle** : Changement d'affectation d'un profil en 1 clic (par exemple transformer un Caissier en Magasinier).
+- **Réinitialisation de mot de passe** : Saisie directe d'un nouveau mot de passe par l'administrateur sans contrainte d'email.
+- **Activation / Suspension en 1 clic** : Possibilité de désactiver temporairement un compte sans altérer son historique de ventes ou de mouvements.
+- **Suppression définitive & Recréation** : Possibilité de supprimer complètement un compte obsolète et d'en recréer un nouveau ultérieurement, avec préservation de l'intégrité comptable.
+- **Garde-fous d'auto-protection** : Le système empêche un administrateur de supprimer son propre compte, de se désactiver lui-même ou de rétrograder le dernier administrateur du système.
 
 ### 5.2 Journal d'Audit Exécutif (`/dashboard/securite/audit/`)
 Traçabilité complète et immuable des événements sensibles :
+- Violations de permissions et tentatives d'accès non autorisées (avec IP, heure et rôle).
+- Modifications de profils et création / suppression de comptes.
 - Modifications de prix de vente des produits.
 - Ajustements manuels de stock.
 - Règlements de dettes fournisseurs et créances clients.

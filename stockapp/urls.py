@@ -90,6 +90,14 @@ urlpatterns = [
     path('securite/sauvegardes/<str:filename>/supprimer/', views.supprimer_sauvegarde_view, name='sauvegarde-supprimer'),
     path('securite/audit/purger/', views.purger_logs_audit_view, name='audit-logs-purger'),
 
+    # Console de Gestion des Utilisateurs & Rôles (RBAC - Administrateur)
+    path('utilisateurs/', views.utilisateurs_list_view, name='utilisateurs-list'),
+    path('utilisateurs/creer/', views.utilisateur_creer_view, name='utilisateur-creer'),
+    path('utilisateurs/<int:pk>/modifier/', views.utilisateur_modifier_view, name='utilisateur-modifier'),
+    path('utilisateurs/<int:pk>/reinitialiser-mot-de-passe/', views.utilisateur_reinitialiser_mdp_view, name='utilisateur-reinitialiser-mdp'),
+    path('utilisateurs/<int:pk>/basculer-statut/', views.utilisateur_basculer_statut_view, name='utilisateur-basculer-statut'),
+    path('utilisateurs/<int:pk>/supprimer/', views.utilisateur_supprimer_view, name='utilisateur-supprimer'),
+
     # Export Legacy
     path('export/pdf/', views.export_report_pdf, name='export-report-pdf'),
 ]

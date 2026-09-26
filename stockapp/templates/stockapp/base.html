@@ -39,76 +39,138 @@
         <button id="sidebar-toggle" class="ml-auto text-cyan-200 hover:text-white" aria-label="Réduire la sidebar"><i class="fas fa-angle-left"></i></button>
       </div>
 
-      <nav class="mt-6 px-2 space-y-1">
-        <a href="/dashboard/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-chart-line w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Tableau de bord</span>
-        </a>
-        <a href="/dashboard/analytics/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-chart-pie w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Analytics 📊</span>
-        </a>
-        <a href="{% url 'stockapp:finances' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-coins w-5 text-emerald-400 group-hover:text-emerald-300"></i>
-          <span>Finances & Trésorerie 💰</span>
-        </a>
-        <a href="/dashboard/previsions-decision/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-brain w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Prévisions IA 🤖</span>
-        </a>
-        <a href="/dashboard/produits/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-boxes w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Produits</span>
-        </a>
-        <a href="/dashboard/stock/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-warehouse w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Stock & Inventaire</span>
-        </a>
-        <a href="/dashboard/mouvements/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-history w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Historique Mouvements</span>
-        </a>
-        <a href="/dashboard/categories/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-tags w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Catégories</span>
-        </a>
+      <!-- Profil connecté Card (Sidebar) -->
+      <div class="mx-3 mt-1 p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm
+          {% if user_role_code == 'Admin' %}bg-purple-600 text-white
+          {% elif user_role_code == 'Manager' %}bg-cyan-600 text-white
+          {% elif user_role_code == 'Magasinier' %}bg-amber-600 text-white
+          {% else %}bg-emerald-600 text-white{% endif %}">
+          {{ request.user.username|slice:":2"|upper }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-bold text-white truncate">{{ request.user.username }}</div>
+          <div class="text-[10px] font-semibold text-cyan-300 flex items-center gap-1">
+            <i class="fas {{ user_role_config.icon }}"></i>
+            <span>{{ user_role_label }}</span>
+          </div>
+        </div>
+      </div>
 
-        <a href="/dashboard/approvisionnements/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-truck-loading w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Approvisionnements</span>
-        </a>
-        <a href="/dashboard/approvisionnements/bon-de-commande/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-900/40 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/60 transition-colors">
-          <i class="fas fa-robot w-5 text-cyan-400"></i>
-          <span>Bon de Commande IA</span>
-        </a>
-        <a href="/dashboard/caisse/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/60 transition-colors shadow-sm">
-          <i class="fas fa-cash-register w-5 text-emerald-400"></i>
-          <span>Caisse POS ⚡</span>
-        </a>
-        <a href="{% url 'stockapp:clotures-caisse-list' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-file-invoice-dollar w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Clôtures Caisse (Z)</span>
-        </a>
-        <a href="{% url 'stockapp:rapports-hub' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/60 transition-colors">
-          <i class="fas fa-folder-open w-5 text-cyan-400"></i>
-          <span>Rapports & Exports 📑</span>
-        </a>
-        <a href="/dashboard/ventes/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-receipt w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Journal Ventes</span>
-        </a>
-        <a href="/dashboard/clients/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-users w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Clients</span>
-        </a>
-        <a href="/dashboard/fournisseurs/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-store w-5 text-cyan-300 group-hover:text-cyan-200"></i>
-          <span>Fournisseurs</span>
-        </a>
-        <a href="{% url 'stockapp:journal-audit' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-indigo-950/40 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-900/60 transition-colors">
-          <i class="fas fa-shield-alt w-5 text-indigo-400"></i>
-          <span>Journal d'Audit 🛡️</span>
-        </a>
+      <nav class="mt-4 px-2 space-y-1">
+
+        <!-- SECTION 1 : PILOTAGE & FINANCES (Admin & Manager) -->
+        {% if is_role_admin or strictly_manager %}
+          <div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-cyan-300/80">
+            Pilotage & Finances
+          </div>
+          <a href="/dashboard/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-chart-line w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Tableau de bord</span>
+          </a>
+          <a href="/dashboard/analytics/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-chart-pie w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Analytics 📊</span>
+          </a>
+          <a href="{% url 'stockapp:finances' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-coins w-5 text-emerald-400 group-hover:text-emerald-300"></i>
+            <span>Finances & Trésorerie 💰</span>
+          </a>
+          <a href="/dashboard/previsions-decision/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-brain w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Prévisions IA 🤖</span>
+          </a>
+          <a href="{% url 'stockapp:rapports-hub' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/60 transition-colors">
+            <i class="fas fa-folder-open w-5 text-cyan-400"></i>
+            <span>Rapports & Exports 📑</span>
+          </a>
+        {% endif %}
+
+        <!-- SECTION 2 : CAISSE POS & VENTES (Admin, Caissier, Manager consultation) -->
+        {% if is_role_admin or is_role_caissier or strictly_manager %}
+          <div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-emerald-300/80">
+            Point de Vente & Caisse
+          </div>
+          {% if is_role_admin or strictly_caissier %}
+            <a href="/dashboard/caisse/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/60 transition-colors shadow-sm">
+              <i class="fas fa-cash-register w-5 text-emerald-400"></i>
+              <span>Caisse POS ⚡</span>
+            </a>
+          {% endif %}
+          <a href="{% url 'stockapp:clotures-caisse-list' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-file-invoice-dollar w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Clôtures Caisse (Z)</span>
+          </a>
+          <a href="/dashboard/ventes/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-receipt w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Journal Ventes</span>
+          </a>
+          <a href="/dashboard/clients/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-users w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Clients</span>
+          </a>
+        {% endif %}
+
+        <!-- SECTION 3 : STOCK & APPROVISIONNEMENTS (Admin, Magasinier, Manager consultation) -->
+        {% if is_role_admin or is_role_magasinier or strictly_manager %}
+          <div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-amber-300/80">
+            Stock & Approvisionnements
+          </div>
+          <a href="/dashboard/stock/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-warehouse w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Stock & Inventaire</span>
+          </a>
+          <a href="/dashboard/produits/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-boxes w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Produits</span>
+          </a>
+          <a href="/dashboard/mouvements/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-history w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Historique Mouvements</span>
+          </a>
+          <a href="/dashboard/categories/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-tags w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Catégories</span>
+          </a>
+          <a href="/dashboard/approvisionnements/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-truck-loading w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Approvisionnements</span>
+          </a>
+          <a href="/dashboard/approvisionnements/bon-de-commande/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-900/40 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/60 transition-colors">
+            <i class="fas fa-robot w-5 text-cyan-400"></i>
+            <span>Bon de Commande IA</span>
+          </a>
+          <a href="/dashboard/fournisseurs/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+            <i class="fas fa-store w-5 text-cyan-300 group-hover:text-cyan-200"></i>
+            <span>Fournisseurs</span>
+          </a>
+        {% endif %}
+
+        <!-- SECTION 4 : ADMINISTRATION, SÉCURITÉ & AUDIT (Admin UNIQUEMENT) -->
+        {% if is_role_admin %}
+          <div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-purple-300">
+            Administration & Sécurité
+          </div>
+          <a href="{% url 'stockapp:utilisateurs-list' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold bg-purple-950/50 text-purple-300 border border-purple-500/40 hover:bg-purple-900/60 transition-colors shadow-sm">
+            <i class="fas fa-users-cog w-5 text-purple-400"></i>
+            <span>Gestion des Profils 👥</span>
+          </a>
+          <a href="{% url 'stockapp:journal-audit' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-indigo-950/40 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-900/60 transition-colors">
+            <i class="fas fa-shield-alt w-5 text-indigo-400"></i>
+            <span>Journal d'Audit 🛡️</span>
+          </a>
+          <a href="{% url 'stockapp:sauvegardes' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-950/30 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/50 transition-colors">
+            <i class="fas fa-database w-5 text-cyan-400"></i>
+            <span>Sauvegardes & Sécurité 💾</span>
+          </a>
+          <a href="/admin/" target="_blank" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-amber-300 hover:bg-white/5 transition-colors">
+            <i class="fas fa-user-shield w-5 text-amber-400"></i>
+            <span>Admin Django</span>
+          </a>
+        {% endif %}
+
+        <!-- Centre d'alertes & Info publique (Tous) -->
+        <div class="pt-2 border-t border-slate-700/50"></div>
         <a href="{% url 'stockapp:notifications-hub' %}" class="group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium bg-amber-950/30 text-amber-300 border border-amber-500/30 hover:bg-amber-900/50 transition-colors">
           <div class="flex items-center gap-3">
             <i class="fas fa-bell w-5 text-amber-400"></i>
@@ -120,17 +182,9 @@
             </span>
           {% endif %}
         </a>
-        <a href="{% url 'stockapp:sauvegardes' %}" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-cyan-950/30 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/50 transition-colors">
-          <i class="fas fa-database w-5 text-cyan-400"></i>
-          <span>Sauvegardes & Sécurité 💾</span>
-        </a>
-        <a href="/info/" class="group mt-6 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
+        <a href="/info/" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
           <i class="fas fa-info-circle w-5 text-cyan-300 group-hover:text-cyan-200"></i>
           <span>Info publique</span>
-        </a>
-        <a href="/admin/" target="_blank" class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <i class="fas fa-user-shield w-5 text-amber-300 group-hover:text-amber-200"></i>
-          <span>Admin Django</span>
         </a>
       </nav>
 
@@ -246,11 +300,22 @@
             </div>
           </div>
           <div class="flex items-center gap-2.5">
-            <div class="h-9 w-9 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ request.user.username|slice:":2"|upper }}</div>
+            <div class="h-9 w-9 rounded-full flex items-center justify-center font-bold text-xs shadow-sm
+              {% if user_role_code == 'Admin' %}bg-purple-600 text-white
+              {% elif user_role_code == 'Manager' %}bg-cyan-600 text-white
+              {% elif user_role_code == 'Magasinier' %}bg-amber-600 text-white
+              {% else %}bg-emerald-600 text-white{% endif %}">
+              {{ request.user.username|slice:":2"|upper }}
+            </div>
             <div class="hidden sm:block text-left">
-              <div class="text-xs font-bold text-slate-800 leading-tight">{{ request.user.username }}</div>
-              <div class="text-[10px] font-semibold text-cyan-600 leading-tight">
-                {% if request.user.is_superuser %}Administrateur{% elif request.user.is_staff %}Manager{% else %}Utilisateur{% endif %}
+              <div class="text-xs font-bold text-slate-800 leading-tight">
+                {% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.username }}{% endif %}
+              </div>
+              <div class="text-[10px] font-bold leading-tight mt-0.5">
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black border {{ user_role_config.badge_class }}">
+                  <i class="fas {{ user_role_config.icon }} text-[9px]"></i>
+                  <span>{{ user_role_label }}</span>
+                </span>
               </div>
             </div>
           </div>

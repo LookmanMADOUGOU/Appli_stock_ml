@@ -1970,8 +1970,8 @@ class Phase9RolesAndAuditTests(TestCase):
             self.assertEqual(l.action, 'MODIFICATION_PRIX')
 
     def test_journal_audit_export_csv(self):
-        self.client.login(username='p9_manager', password='password')
-        JournalAudit.log_action(self.manager_user, 'CREATION', 'PRODUIT', 'Prod CSV', 'Test Export')
+        self.client.login(username='p9_admin', password='password')
+        JournalAudit.log_action(self.admin_user, 'CREATION', 'PRODUIT', 'Prod CSV', 'Test Export')
 
         url = reverse('stockapp:journal-audit-export-csv')
         res = self.client.get(url)
@@ -2874,4 +2874,267 @@ class Phase14PackagingAndDeploymentTests(TestCase):
         out = io.StringIO()
         call_command('check', stdout=out)
         self.assertIn("System check identified no issues", out.getvalue())
+
+
+class RBACTests(TestCase):
+    """
+    Suite complète de tests pour l'architecture RBAC stricte de SMART-TECH :
+    - 4 profils distincts et indépendants (Admin, Manager, Magasinier, Caissier)
+    - Isolation stricte des accès et redirection vers l'espace métier dédié
+    - Traçabilité des accès refusés dans JournalAudit
+    - Module exclusif d'administration des utilisateurs (CRUD complet + sécurités)
+    - Garde-fous d'auto-protection de l'administrateur
+    """
+    def setUp(self):
+        from django.contrib.auth.models import Group
+        from stockapp.permissions import (
+            assign_user_role, ROLE_ADMIN, ROLE_MANAGER, ROLE_MAGASINIER, ROLE_CAISSIER
+        )
+
+        for r in [ROLE_ADMIN, ROLE_MANAGER, ROLE_MAGASINIER, ROLE_CAISSIER]:
+            Group.objects.get_or_create(name=r)
+
+        self.admin = User.objects.create_user(username='rbac_admin', password='password123', email='admin@test.com')
+        assign_user_role(self.admin, ROLE_ADMIN)
+
+        self.manager = User.objects.create_user(username='rbac_manager', password='password123', email='mgr@test.com')
+        assign_user_role(self.manager, ROLE_MANAGER)
+
+        self.magasinier = User.objects.create_user(username='rbac_magasinier', password='password123', email='mag@test.com')
+        assign_user_role(self.magasinier, ROLE_MAGASINIER)
+
+        self.caissier = User.objects.create_user(username='rbac_caissier', password='password123', email='cais@test.com')
+        assign_user_role(self.caissier, ROLE_CAISSIER)
+
+    def test_role_assignment_and_helpers(self):
+        from stockapp.permissions import (
+            get_user_role_code, get_user_primary_role, user_has_role,
+            ROLE_ADMIN, ROLE_MANAGER, ROLE_MAGASINIER, ROLE_CAISSIER
+        )
+
+        self.assertEqual(get_user_role_code(self.admin), ROLE_ADMIN)
+        self.assertEqual(get_user_primary_role(self.admin), "Administrateur")
+        self.assertTrue(self.admin.is_superuser)
+        self.assertTrue(self.admin.is_staff)
+
+        self.assertEqual(get_user_role_code(self.manager), ROLE_MANAGER)
+        self.assertEqual(get_user_primary_role(self.manager), "Manager")
+        self.assertFalse(self.manager.is_superuser)
+        self.assertTrue(self.manager.is_staff)
+
+        self.assertEqual(get_user_role_code(self.magasinier), ROLE_MAGASINIER)
+        self.assertEqual(get_user_primary_role(self.magasinier), "Magasinier")
+        self.assertFalse(self.magasinier.is_superuser)
+        self.assertFalse(self.magasinier.is_staff)
+
+        self.assertEqual(get_user_role_code(self.caissier), ROLE_CAISSIER)
+        self.assertEqual(get_user_primary_role(self.caissier), "Caissier")
+        self.assertFalse(self.caissier.is_superuser)
+        self.assertFalse(self.caissier.is_staff)
+
+        # Admin a tous les rôles
+        self.assertTrue(user_has_role(self.admin, ROLE_ADMIN))
+        self.assertTrue(user_has_role(self.admin, ROLE_MANAGER))
+        self.assertTrue(user_has_role(self.admin, ROLE_MAGASINIER))
+        self.assertTrue(user_has_role(self.admin, ROLE_CAISSIER))
+
+        # Magasinier n'a pas accès aux finances ni à la caisse
+        self.assertTrue(user_has_role(self.magasinier, ROLE_MAGASINIER))
+        self.assertFalse(user_has_role(self.magasinier, ROLE_ADMIN))
+        self.assertFalse(user_has_role(self.magasinier, ROLE_MANAGER))
+        self.assertFalse(user_has_role(self.magasinier, ROLE_CAISSIER))
+
+        # Caissier n'a pas accès au stock ni aux finances
+        self.assertTrue(user_has_role(self.caissier, ROLE_CAISSIER))
+        self.assertFalse(user_has_role(self.caissier, ROLE_ADMIN))
+        self.assertFalse(user_has_role(self.caissier, ROLE_MANAGER))
+        self.assertFalse(user_has_role(self.caissier, ROLE_MAGASINIER))
+
+    def test_dashboard_redirection_per_role(self):
+        # Caissier arriving on dashboard is redirected to POS
+        self.client.login(username='rbac_caissier', password='password123')
+        res_cais = self.client.get(reverse('stockapp:dashboard'))
+        self.assertRedirects(res_cais, reverse('stockapp:caisse-pos'))
+
+        # Magasinier arriving on dashboard is redirected to Stock Inventaire
+        self.client.login(username='rbac_magasinier', password='password123')
+        res_mag = self.client.get(reverse('stockapp:dashboard'))
+        self.assertRedirects(res_mag, reverse('stockapp:stock-inventaire'))
+
+        # Manager gets executive dashboard
+        self.client.login(username='rbac_manager', password='password123')
+        res_mgr = self.client.get(reverse('stockapp:dashboard'))
+        self.assertEqual(res_mgr.status_code, 200)
+
+        # Admin gets executive dashboard
+        self.client.login(username='rbac_admin', password='password123')
+        res_adm = self.client.get(reverse('stockapp:dashboard'))
+        self.assertEqual(res_adm.status_code, 200)
+
+    def test_caissier_isolation_and_audit(self):
+        self.client.login(username='rbac_caissier', password='password123')
+
+        # Allowed
+        res_pos = self.client.get(reverse('stockapp:caisse-pos'))
+        self.assertEqual(res_pos.status_code, 200)
+
+        # Denied: Stock
+        res_stock = self.client.get(reverse('stockapp:stock-inventaire'))
+        self.assertRedirects(res_stock, reverse('stockapp:caisse-pos'))
+
+        # Denied: Finances
+        res_fin = self.client.get(reverse('stockapp:finances'))
+        self.assertRedirects(res_fin, reverse('stockapp:caisse-pos'))
+
+        # Denied: Gestion utilisateurs
+        res_users = self.client.get(reverse('stockapp:utilisateurs-list'))
+        self.assertRedirects(res_users, reverse('stockapp:caisse-pos'))
+
+        # Check audit log recorded the denied attempts
+        audit_entries = JournalAudit.objects.filter(utilisateur=self.caissier, action='CONNEXION')
+        self.assertGreaterEqual(audit_entries.count(), 3)
+
+    def test_magasinier_isolation_and_audit(self):
+        self.client.login(username='rbac_magasinier', password='password123')
+
+        # Allowed
+        res_stock = self.client.get(reverse('stockapp:stock-inventaire'))
+        self.assertEqual(res_stock.status_code, 200)
+
+        # Denied: Caisse POS
+        res_caisse = self.client.get(reverse('stockapp:caisse-pos'))
+        self.assertRedirects(res_caisse, reverse('stockapp:stock-inventaire'))
+
+        # Denied: Finances
+        res_fin = self.client.get(reverse('stockapp:finances'))
+        self.assertRedirects(res_fin, reverse('stockapp:stock-inventaire'))
+
+        # Denied: Sauvegardes
+        res_backups = self.client.get(reverse('stockapp:sauvegardes'))
+        self.assertRedirects(res_backups, reverse('stockapp:stock-inventaire'))
+
+    def test_manager_isolation(self):
+        self.client.login(username='rbac_manager', password='password123')
+
+        # Allowed: Analytics, Finances, Previsions
+        self.assertEqual(self.client.get(reverse('stockapp:finances')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('stockapp:analytics')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('stockapp:previsions-decision')).status_code, 200)
+
+        # Denied: Admin exclusive modules
+        res_users = self.client.get(reverse('stockapp:utilisateurs-list'))
+        self.assertRedirects(res_users, reverse('stockapp:dashboard'))
+
+        res_sauv = self.client.get(reverse('stockapp:sauvegardes'))
+        self.assertRedirects(res_sauv, reverse('stockapp:dashboard'))
+
+        res_audit = self.client.get(reverse('stockapp:journal-audit'))
+        self.assertRedirects(res_audit, reverse('stockapp:dashboard'))
+
+    def test_admin_universal_access(self):
+        self.client.login(username='rbac_admin', password='password123')
+
+        urls_to_check = [
+            'stockapp:dashboard',
+            'stockapp:analytics',
+            'stockapp:finances',
+            'stockapp:produits-list',
+            'stockapp:stock-inventaire',
+            'stockapp:caisse-pos',
+            'stockapp:ventes-list',
+            'stockapp:previsions-decision',
+            'stockapp:journal-audit',
+            'stockapp:sauvegardes',
+            'stockapp:utilisateurs-list',
+        ]
+        for url_name in urls_to_check:
+            res = self.client.get(reverse(url_name))
+            self.assertEqual(res.status_code, 200, f"L'admin devrait avoir accès à {url_name}")
+
+    def test_admin_user_crud_operations(self):
+        self.client.login(username='rbac_admin', password='password123')
+
+        # 1. Create a new user with role Caissier
+        res_create = self.client.post(reverse('stockapp:utilisateur-creer'), {
+            'username': 'nouveau_caissier',
+            'first_name': 'Jean',
+            'last_name': 'Dupont',
+            'email': 'jean@example.com',
+            'role': 'Caissier',
+            'password': 'InitialPassword123!',
+            'password_confirm': 'InitialPassword123!',
+            'is_active': 'on',
+        })
+        self.assertRedirects(res_create, reverse('stockapp:utilisateurs-list'))
+
+        u = User.objects.filter(username='nouveau_caissier').first()
+        self.assertIsNotNone(u)
+        self.assertEqual(u.first_name, 'Jean')
+        from stockapp.permissions import get_user_role_code, ROLE_CAISSIER, ROLE_MAGASINIER
+        self.assertEqual(get_user_role_code(u), ROLE_CAISSIER)
+        self.assertTrue(u.is_active)
+
+        # 2. Update user to change role to Magasinier
+        res_edit = self.client.post(reverse('stockapp:utilisateur-modifier', kwargs={'pk': u.pk}), {
+            'first_name': 'Jean-Pierre',
+            'last_name': 'Dupont',
+            'email': 'jp.dupont@example.com',
+            'role': 'Magasinier',
+            'is_active': 'on',
+        })
+        self.assertRedirects(res_edit, reverse('stockapp:utilisateurs-list'))
+        u.refresh_from_db()
+        self.assertEqual(u.first_name, 'Jean-Pierre')
+        self.assertEqual(get_user_role_code(u), ROLE_MAGASINIER)
+
+        # 3. Reset password
+        res_pwd = self.client.post(reverse('stockapp:utilisateur-reinitialiser-mdp', kwargs={'pk': u.pk}), {
+            'new_password': 'NewPassword456!',
+            'new_password_confirm': 'NewPassword456!',
+        })
+        self.assertRedirects(res_pwd, reverse('stockapp:utilisateurs-list'))
+        # Verify can login with new password
+        can_login = self.client.login(username='nouveau_caissier', password='NewPassword456!')
+        self.assertTrue(can_login)
+
+        # Login back as admin
+        self.client.login(username='rbac_admin', password='password123')
+
+        # 4. Toggle active status (deactivate)
+        res_toggle = self.client.post(reverse('stockapp:utilisateur-basculer-statut', kwargs={'pk': u.pk}))
+        self.assertRedirects(res_toggle, reverse('stockapp:utilisateurs-list'))
+        u.refresh_from_db()
+        self.assertFalse(u.is_active)
+
+        # 5. Delete user
+        res_del = self.client.post(reverse('stockapp:utilisateur-supprimer', kwargs={'pk': u.pk}))
+        self.assertRedirects(res_del, reverse('stockapp:utilisateurs-list'))
+        self.assertFalse(User.objects.filter(username='nouveau_caissier').exists())
+
+    def test_admin_self_protection_guards(self):
+        self.client.login(username='rbac_admin', password='password123')
+
+        # Admin cannot delete themselves
+        res_del_self = self.client.post(reverse('stockapp:utilisateur-supprimer', kwargs={'pk': self.admin.pk}))
+        self.assertRedirects(res_del_self, reverse('stockapp:utilisateurs-list'))
+        self.assertTrue(User.objects.filter(pk=self.admin.pk).exists())
+
+        # Admin cannot deactivate themselves
+        res_deact_self = self.client.post(reverse('stockapp:utilisateur-basculer-statut', kwargs={'pk': self.admin.pk}))
+        self.assertRedirects(res_deact_self, reverse('stockapp:utilisateurs-list'))
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+
+        # Admin cannot demote themselves if sole admin
+        res_demote = self.client.post(reverse('stockapp:utilisateur-modifier', kwargs={'pk': self.admin.pk}), {
+            'first_name': 'Admin',
+            'last_name': 'Root',
+            'email': 'admin@test.com',
+            'role': 'Caissier',
+            'is_active': 'on',
+        })
+        self.assertRedirects(res_demote, reverse('stockapp:utilisateurs-list'))
+        from stockapp.permissions import get_user_role_code, ROLE_ADMIN
+        self.assertEqual(get_user_role_code(self.admin), ROLE_ADMIN)
+
 

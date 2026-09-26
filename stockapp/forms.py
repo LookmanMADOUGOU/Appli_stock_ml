@@ -302,4 +302,147 @@ class ClotureCaisseForm(forms.ModelForm):
         }
 
 
+# ==================== GESTION DES UTILISATEURS & PROFILS (RBAC) ====================
+
+from django.contrib.auth.models import User
+from .permissions import ROLES_CHOICES, ROLE_ADMIN, ROLE_MANAGER, ROLE_MAGASINIER, ROLE_CAISSIER
+
+
+class UtilisateurCreateForm(forms.Form):
+    """
+    Formulaire complet de création d'un utilisateur par l'administrateur.
+    Permet d'assigner l'un des 4 profils de base (Admin, Manager, Magasinier, Caissier).
+    """
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        label="Identifiant de connexion",
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'ex: caissier_jean, magasinier_ali',
+            'autocomplete': 'off'
+        })
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Prénom",
+        widget=forms.TextInput(attrs={'class': 'input-field', 'placeholder': 'ex: Jean'})
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Nom de famille",
+        widget=forms.TextInput(attrs={'class': 'input-field', 'placeholder': 'ex: KOFFI'})
+    )
+    email = forms.EmailField(
+        required=False,
+        label="Adresse Email",
+        widget=forms.EmailInput(attrs={'class': 'input-field', 'placeholder': 'employe@smarttech.bj'})
+    )
+    role = forms.ChoiceField(
+        choices=ROLES_CHOICES,
+        required=True,
+        label="Profil & Rôle Attribué",
+        widget=forms.Select(attrs={'class': 'input-field'})
+    )
+    password = forms.CharField(
+        max_length=128,
+        required=True,
+        label="Mot de passe initial",
+        widget=forms.PasswordInput(attrs={'class': 'input-field', 'placeholder': 'Minimum 6 caractères'})
+    )
+    password_confirm = forms.CharField(
+        max_length=128,
+        required=True,
+        label="Confirmer le mot de passe",
+        widget=forms.PasswordInput(attrs={'class': 'input-field', 'placeholder': 'Répétez le mot de passe'})
+    )
+    is_active = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Compte actif immédiatement",
+        widget=forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500'})
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Cet identifiant est déjà utilisé. Veuillez en choisir un autre.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('password')
+        p2 = cleaned_data.get('password_confirm')
+        if p1 and p2 and p1 != p2:
+            self.add_error('password_confirm', "Les deux mots de passe ne correspondent pas.")
+        if p1 and len(p1) < 6:
+            self.add_error('password', "Le mot de passe doit comporter au moins 6 caractères.")
+        return cleaned_data
+
+
+class UtilisateurUpdateForm(forms.Form):
+    """
+    Formulaire d'édition d'un utilisateur existant (Informations personnelles, rôle, statut).
+    """
+    first_name = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Prénom",
+        widget=forms.TextInput(attrs={'class': 'input-field', 'placeholder': 'Prénom'})
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Nom de famille",
+        widget=forms.TextInput(attrs={'class': 'input-field', 'placeholder': 'Nom'})
+    )
+    email = forms.EmailField(
+        required=False,
+        label="Adresse Email",
+        widget=forms.EmailInput(attrs={'class': 'input-field', 'placeholder': 'employe@smarttech.bj'})
+    )
+    role = forms.ChoiceField(
+        choices=ROLES_CHOICES,
+        required=True,
+        label="Profil & Rôle Attribué",
+        widget=forms.Select(attrs={'class': 'input-field'})
+    )
+    is_active = forms.BooleanField(
+        required=False,
+        label="Compte actif",
+        widget=forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500'})
+    )
+
+
+class UtilisateurPasswordResetForm(forms.Form):
+    """
+    Formulaire pour réinitialiser directement le mot de passe d'un utilisateur par l'administrateur.
+    """
+    new_password = forms.CharField(
+        max_length=128,
+        required=True,
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={'class': 'input-field', 'placeholder': 'Minimum 6 caractères'})
+    )
+    new_password_confirm = forms.CharField(
+        max_length=128,
+        required=True,
+        label="Confirmer le nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={'class': 'input-field', 'placeholder': 'Répétez le mot de passe'})
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('new_password')
+        p2 = cleaned_data.get('new_password_confirm')
+        if p1 and p2 and p1 != p2:
+            self.add_error('new_password_confirm', "Les deux mots de passe ne correspondent pas.")
+        if p1 and len(p1) < 6:
+            self.add_error('new_password', "Le mot de passe doit comporter au moins 6 caractères.")
+        return cleaned_data
+
+
+
 
